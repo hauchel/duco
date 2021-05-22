@@ -1,0 +1,13 @@
+# resources folders
+logs*/
+# private info
+priv*
+
+# Byte-compiled and optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+

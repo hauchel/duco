@@ -1,0 +1,4 @@
+Rig 39
+25 I2C 25 AVR newMiner (DUCO-S1A) v2.47
+26 I2C 26 AVR newMiner (DUCO-S1A) v2.47
+27 I2C 27 AVR newMiner (DUCO-S1A) v2.47
