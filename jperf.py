@@ -3,7 +3,9 @@
 #
 # Performance of duco: every 10 seconds query the balance of user 
 # shows 10 seconds diff, one minute moving average
-# logs written to /logs 
+# logs written to /logs   perf_username_day_hour.txt
+# logs contain the total balance while screen shows
+# growth since start of program
 # 
 # see https://github.com/dansinclair25/duco-rest-api
 # {"result":{"balance":187.32699041006376,"username":"targon"},"success":true}\n
@@ -15,7 +17,6 @@ try:
 except ImportError:
     print("no privusers.py, having")
     print("user=['user0','user1','user2']")
-
 
 import time
 from datetime import datetime
@@ -79,10 +80,12 @@ def query():
         arP+=1
         if(arP>5):
             arP=0
-        txsu="{:10.3f}".format(su*1000)
-        txpd="{:10.2f}".format(su*1440) #per day
+        txsu="{:10.3f}".format(su*1000)     # per minute   
+        txpd="{:10.2f}".format(su*1440)     # per day
+        txab="{:10.2f}".format(bal)         # abs for logf
         tx=txti+" "+tx99+txpi+tx10+txsu+txpd
         print (tx)
+        tx=txti+" "+txab+txpi+tx10+txsu+txpd
         logf.write(tx+"\n")
         prev=bal
         if not connected:   #something went wrong
@@ -94,7 +97,6 @@ def query():
             logf.close()
             return
 
-
 def switchuser(n):
     global username
     try:
@@ -105,51 +107,63 @@ def switchuser(n):
         print ("to use provide privusers.py with")
         print ("users=['user0','user1','user2']")
         
-        
+def showusers():
+    try:
+        print("friends and foes:")
+        n=0
+        for u in user.users:
+            print ("{:2d} ".format(n),u)
+            n+=1
+    except Exception as inst:
+        print ("showusers exception "+str(inst))
+        print ("to use provide privusers.py with")
+        print ("users=['user0','user1','user2']")
 
 def hilfe():
     print("              \n\
-a  Average #             \n\
+a  Average  #TODO        \n\
 b  Balance               \n\
 q  query         \n\
+s  Showusers     \n\
+u  switchUser, e.g. 3u     \n\
 x  eXit          \n\
-                        \n")
+   \n")
         
 def menu():   
     global username
     inpAkt=False
     inp=0
-    myc=0  #current connect 
     query()
     # here after keypress 
     while True:
         print("P>",end=" ")
         ch = kb.getch()  
-        print(ch)
         if ((ch >= '0') and (ch <= '9')):
             if (inpAkt) :
                 inp = inp * 10 + (ord(ch) - 48);
             else:
                 inpAkt = True;
                 inp = ord(ch) - 48;
+            print(inp)
         else:
+            print(ch)
             inpAkt=False
             try:
                 if ch=="a":
-                    myc=inp
-                    print ("myc=",myc)
+                    pass
                 elif ch=="b":
                     print("Balance ",get_balance())
                 elif ch=="q":
                     query()
+                elif ch=="s":
+                    showusers()                
                 elif ch=="u":
                     switchuser(inp)
-                    query()
-                   
+                    query()              
                 elif ch=="x":
                     return
                 else:
-                    print("else"+str(ord(ch)))
+                    print("else "+str(ord(ch)))
                     hilfe()
             except Exception as inst:
                 print ("menu Exception "+str(inst))
