@@ -8,10 +8,8 @@ Technically it's possible to have more MiniPros, but the problem is the time it 
 Why MicroPython? Because Arduino on ESP is aPitA, it takes long to compile and to transfer and i wanted to learn something new. And it was really worth it. 
 
 # Hardware
-A rig consists of 3 MiniPro and one ESP, currently those rigs are used:
+A **rig** consists of 3 MiniPro and one ESP, currently those rigs are used:
 
-ESP is in 3D-printed Housing (FreeCad esp12L), additionaly a Matrix board 11 rows at (3*3+1) is used to accomodate the additional 2 pullups and the levelshifter for the I2C. One  serves two ESPs
-These are currently used : 
 ESP | IP| S | S | S        
 ---|---|---|---|---
 |ESP-DF5B35 |192.168.178.39|25|26|27
@@ -19,13 +17,14 @@ ESP | IP| S | S | S
 |ESP-DF9478 |192.168.178.41|15|16|17
 |ESP-DF0369 |192.168.178.42|20|21|22
 
-ESP is in 3D-printed Housing (FreeCad esp12L), additionaly a matrix board 11 rows at (3*3+1) is used to accomodate the additional 2 pullups and the levelshifter for the I2C. One  serves two ESPs
+In a **racket** rigs are one or more  rows  where RAW(!), GND, SCL and SDA are connected. Never needed any pullups because the MiniPro inputs use internal pullups. A row is 3d-printed (FreeCad RackGeh3 or RackGeh5), the vertical connectors are FreeCad Rack* in different length, screws are  SPAX yellow 2x10, ideally 4 per row.
+ESP is in 3D-printed Housing (FreeCad esp12L), additionaly a matrix board 11 rows at (3*3+1) is used to accomodate the additional 2 pullups and the **levelshifter** for the I2C. One  serves two ESPs. Btw: (of course) a level shifter for SDA and SCL  is needed as the MiniPros run with 5 V  and the ESP only 3.3V. 
 
                 3.3 V side 
     grn  blu  blk  red  grn  blu   
-    SDA  SCL  GND  !!!  SDA  SCL    
+    SDA  SCL  GND  VVV  SDA  SCL    
     grn  blu  blk  whi  grn  blu   
-                  5 V side
+                 5 V side
        
 On Breakout board  ESP 12-F  used these wire  colors:
 
@@ -44,21 +43,44 @@ For RST and GPIO0 add a 10k Pullup to VCC and button to GND.
 **Enter programming mode** : hold grey, press pink,  release pink,  release grey
 Fortunately this finger exercise is only required once in order to flash MicroPython.
 
+For the **power supply** it is planned to to use 4x1.5V Ni-MH 2400 mAh  charged by the sun. The voltage varies up to 6 V, so the MiniPro RAW pin is used for VCC. 
+For the ESP a step-down converter 1 A  (+ fat elkos) reduces the voltage to 3.3V.  One  ESP can draw up to 400 mA while sending, but only for a very short time.
+ For the +5V of the levelshifters (very few mA only) used a low-drop 5 V regulator, could also use VCC from any MicroPro. Instead of the accus use a power adapter + step-down 1A to 5.55 V  (+ fat elkos):
+
+    ACAdaper -- Stp-Dn 5.55 V  -- RAW MicroPro
+    				           -- Stp-Dn 3.33 V -- ESP
+    				           -- Low Drop 5V -- levelshifter
+
 # Master and Slave
 
 ## Slave
-A slave can be in one of three run states (runS):
+A slave can be in one of three run states (runS):  
 
-runS|   Meaning |     Subsequent states
----|---|---|---
-| I |  Idle | B while processing requests from master    | 
-| B |  Busy | C after Calculation or I after other requests  
-| C |  Complete | I after master fetched results
-| E |  Error | not used| 
+|runS|Meaning |Subsequent states                            |
+|----|--------|---------------------------------------------|
+|I   |Idle    |->B while processing requests from master      |
+|B   |Busy    |->C after Calculation or ->I after other requests|
+|C   |Complete|->I after master fetched results               |
+|E   |Error   |not used                                     |
+        
 
 ## Serial Communication
-Master sends 
+Original plan was to use the serial interface. How can an ESP with one interface talk to n MiniPros? very simple, by using diodes, just have to tell the Minipros which one is  active:
+
+							RX
+							RX
+		TX  --- to all 		RX
+    ESP				
+		RX	---	---	>| ---	TX
+					>| ---	TX
+					>| ---	TX
+							
+TX is usally high, only pulled down low while sending
+
+Master sends special activation code, eg "A 2" means only slave #2 activates, the others switch to inactive (nevertheless they can calculate)
+Slaves only send when active, else they wait.
 Slave then starts calculating and sends back 
+As the I2C solution works so flawlessly and the Serial is very helpful  for debugging ... 
 
 
 ## I2C Communication
@@ -70,41 +92,42 @@ I did not want to change the max size 32 of a I2C message as used in Arduinos wi
  
 
               
-
-char|   Meaning | Example  |    Action by Slave
----|---|---|---|---
-| A |  clear flags | A     |   sets runS to I
-| D |  set difficulty  | tbd                     -
-| E |  * provide exec time|not in ver c| sets *
-| H |  hashme   | H| start hashing
-| I |  provide ID          |I
-| L |  lastblockhash 0:20  |L4e329de23..| store
-| M |  lastblockhash 20:40|M4e329de23..| store
-| N |  newblockhash 0:20|N4e329de23..| store
-| O |  newblockhash 0:40|O4e329de23..| store start hashig
-| R |  *  provide Result| not in ver c
-| S |  *  provide Status| S| runS (runR slCmd)
-| V |  set twi Adr |V8| set new Addres and reboot         -
+|char|Meaning       |Example       |Action by Slave                    
+|---|---|---|---
+|A   |clear flags        |A                        |sets runS to I                     |  |
+|D   |set difficulty     |tbd                     -|                                   |  |
+|E   |* provide exec time|not in ver c             |sets *                             |  |
+|H   |hashme             |H                        |start hashing                      |  |
+|I   |provide ID         |I                        |                                   |  |
+|L   |lastblockhash 0:20 |L4e329de23..             |store                              |  |
+|M   |lastblockhash 20:40|M4e329de23..             |store                              |  |
+|N   |newblockhash 0:20  |N4e329de23..             |store                              |  |
+|O   |newblockhash 0:40  |O4e329de23..             |store start hashig                 |  |
+|R   |*  provide Result  |not in ver c             |                                   |  |
+|S   |*  provide Status  |S                        |runS (runR slCmd)                  |  |
+|V   |set twi Adr        |V8                       |set new Addres and reboot         -|  |
 
 
 
 # Master and Server
-The communication with the server is reflected by status
-sta|   Meaning | Slave  |    Comment
----|---|---|---|---
-| D |  disconnected | ?     |   sets runS runR
-| C |  connected  | I|  connect reset  slave
-| R |  request sent| I|
-| J |  job received  |I|  hash to slave
-| K |  transf. to slave|B |  Wait for slave 
-| K |  transf. to slave|C |  slave C, reset
-| E |  result sent     |I|
-| F |  result response Error     |I|->C
-| G |  result response Good     |I| ->C
+The communication with the server is reflected by status:
 
+    |sta|Meaning              |Slave|Comment             
+    |---|---------------------|-----|--------------------
+    |D  |disconnected         |?    |sets runS runR      
+    |C  |connected            |I    |connect reset  slave
+    |R  |request sent         |I    |                    
+    |J  |job received         |I    |hash to slave       
+    |K  |transf. to slave     |B    |Wait for slave      
+    |K  |transf. to slave     |C    |slave C, reset      
+    |E  |result sent          |I    |                    
+    |F  |result response Error|I    |->C                 
+    |G  |result response Good |I    |->C                 
 
+There are PERformance times taken:
 
-
+    PER getJob took  779
+    PER getRes took  780
 
 
 # Software
@@ -119,10 +142,90 @@ Software consists of
  - Setup
 
 One major challenge is that for compiling the python code there must be enough free RAM available. Compiling is triggered by the first import statement, subsequent imports don't need this. use dir() to check the compiled modules
+
 # boot.py
 
 
 the cluster consists of several unit
+# boot.py
+
+
+the cluster consists of several unit
+## mydu
+The main program has several commands for debugging purposes,
+For daily ops only 3 are needed:
+s to start  reads configuration file 
+l to loop 99999 
+if a key is pressed it returns to the menu
+x  to exit
+H> x
+closed
+closed
+closed
+MicroPython v1.15 on 2021-04-18; ESP module with ESP8266
+Type "help()" for more information.
+to restart use 
+but do not use s again as the connections still exist
+
+drop a connection with d, can use it everytime
+l to
+ loop
+o overview 
+i statistic 
+
+Logfile looks like this
+
+    ===Loop  99851
+    *** Targ  20 Sta  C				<- C = MiniPro completed previos calc
+    ela 2863  res  476  rat 166     <- fetched values from MiniPro took 2863 ms to find 476
+    SndRes took  755				<- 755 ms to send result to server
+    GOOD							<- of course 
+    ReqJob took  1431				<- 1431 ms to request a new job
+    Hashes sent  30					<- 30 ms to send hashes to Minipro which starts calculating
+    *** Targ  21 Sta  C				<- next 
+    ela 2707  res  450  rat 166
+    SndRes took  4520				<- oops it took 4.5 seconds to send result
+    GOOD
+    ReqJob took  3669				<- and 3.6 to fetch new job
+    Hashes sent  34
+    *** Targ  22 Sta  C
+    ela 12  res  1  rat 83
+    SndRes took  514
+    GOOD
+    ReqJob took  636
+    Hashes sent  30                  
+
+Average values  when the server is in a good mood:
+
+    Target 20  Connected True
+    Name >I2C 20 AVR Miner (DUCO-S1A) v2.47<
+    Requests  308				<- calculated 308 hashes
+    ReqWait  271532  per  882	<- average 882 ms to request job
+    ReqZwi  1060  per  3		<- thereof average 3 ms to send, rest 882-3 ms waiting
+    SndWait  246115  per  799	<- average 799 ms to send result
+    SndZwi  117  per  0			<- thereof average 0 ms to send
+    Targ Busy  611				<- 611 times checking the Minipro had not yet completed calculation
+
+With a hash rate of 160 difficulty 5 it takes the Arduino average 1500 ms maximum 3000 ms to calculate.  So for me it does not make sense to have more than 3 Arduinos per ESP as they  often wait for jobs but reduce the kolka rating.
+
+Every  10 seconds a performance check program queries my  balance:
+Using 3 rigs (e.g. 3 ESP<and 9 Arduinos) today shortly after the restart (?)  of  the server
+
+    values below in milliDuco
+    Time            Total  ping    10 sec    minute    Duco/d
+    19:47:00       49.549   902     9.136    38.267     55.10
+    19:47:10       53.310    16     3.760    37.420     53.89
+    19:47:20       62.226   385     8.916    38.767     55.82
+    19:47:30       66.221   168     3.995    38.202     55.01
+    19:47:40       74.292    16     8.071    38.479     55.41
+    19:47:50       80.716   453     6.424    40.303     58.04
+At 19:47:10  the time to get the balance was 16 ms.  In the previos 10 seconds the balance increased by 0.003760 Duco, in the last minute (moving average) the balance increased by 0.037420 Duco which would be 53.89 Ducos a day. Unfortunately this is not the normal. Now i get
+    
+    21:55:50     2854.008   149     1.786    14.837     21.37
+    21:56:00     2857.239   965     3.232    14.554     20.96
+    21:56:10     2858.861   138     1.622    14.410     20.75
+    21:56:20     2860.974   670     2.113    14.252     20.52
+    21:56:30     2865.037   461     4.063    14.76
 ## mydu
 The main program has several commands for debugging purposes,
 For daily ops only 3 are needed:
@@ -234,4 +337,10 @@ Note right of Server: mydu waits (request time)
 Server-->>mydu: here you are
 
 ```
+
+
+
+
+
+
 

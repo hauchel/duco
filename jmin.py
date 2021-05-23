@@ -97,11 +97,23 @@ def switchuser(n):
         print ("to use provide privusers.py with")
         print ("users=['user0','user1','user2']")
         
-
+def showusers():
+    try:
+        print("friends and foes:")
+        n=0
+        for u in user.users:
+            print ("{:2d} ".format(n),u)
+            n+=1
+    except Exception as inst:
+        print ("showusers exception "+str(inst))
+        print ("to use provide privusers.py with")
+        print ("users=['user0','user1','user2']")
+        
 def hilfe():
     print("              \n\
 j  Json with tick n   \n\
 q  Query  tick 10        \n\
+s  Show users   \n\
 u  switch to User n then query fast      \n\
 x  eXit          \n\
  \n")
@@ -110,7 +122,6 @@ def menu():
     global username
     inpAkt=False
     inp=0
-    myc=0  #current connect
     query(10)
     # here after keypress 
     while True:
@@ -129,14 +140,15 @@ def menu():
             inpAkt=False
             try:
                 if ch=="a":
-                    myc=inp
-                    print ("myc=",myc)
+                    pass
                 elif ch=="j":
                     query(inp)
                 elif ch=="n":
                     pass
                 elif ch=="q":
                     query(10)
+                elif ch=="s":
+                    showusers()                         
                 elif ch=="u":
                     switchuser(inp)
                     query(2)

@@ -108,9 +108,10 @@ def menu():
     myc=0
     verbose = True
     print (username+", welcome to mydu. Use s to start:") 
-    get_config()
-    print ("... then to loop:")
-    loop(0)
+    print ("... then l to loop:")
+    if  len(myCons)==0:  #re-running config would duplicate cons
+        get_config()
+        loop(0)
     while True:
         print("H>",end=" ")
         ch = getch()  
@@ -175,8 +176,7 @@ def menu():
                     print("else"+str(ord(ch)))
             except Exception as inst:
                 print ("menu Exception "+str(inst))
-                raise  #remove if perfect
-      
-        
+                raise  #remove when perfect
+
 menu()        
 

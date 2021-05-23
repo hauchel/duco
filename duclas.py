@@ -101,7 +101,7 @@ class ccon():
             self.sta='D'
             return
         tim=time.ticks_diff(time.ticks_ms(),start)
-        print ("PER GetJob took ",tim)
+        print ("PER getJob took",tim)
         self.getJobWait+=tim
         self.reqAnz+=1
         job = job.split(",")  
@@ -143,7 +143,7 @@ class ccon():
             self.sta='D'
             return
         tim=time.ticks_diff(time.ticks_ms(),start)
-        print ("PER getRes took ",tim)
+        print ("PER getRes took",tim)
         self.getResWait+=tim
         print (self.target,feedback.rstrip())
               
@@ -242,20 +242,22 @@ class ccon():
         self.verbose=x
         print (self.tarnam," verbose ",str(self.verbose))
         
+        
     def coninfo(self):
-         print()
-         print ("Target",self.target," sta",self.sta)
-         print ("Name >"+self.tarnam+"< >"+self.ducoId+ "< sendrate"+str(self.sendRate))
-         if self.reqAnz>0:
-             print ("Requests ",self.reqAnz)
-             tt=round(self.getJobWait/self.reqAnz)
-             print ("ReqWait ",self.getJobWait, " per ",tt)
-             tt=round(self.getResWait/self.reqAnz)
-             print ("SndWait ",self.getResWait, " per ",tt)
-             if self.tarEla >0:
+        print()
+        print ("Target",self.target," sta",self.sta)
+        print ("Name >"+self.tarnam+"< >"+self.ducoId+ "< sendrate"+str(self.sendRate))
+        if self.reqAnz>0:
+            print ("Requests ",self.reqAnz)
+            tt=round(self.getJobWait/self.reqAnz)
+            print ("ReqWait ",self.getJobWait, " per ",tt)
+            tt=round(self.getResWait/self.reqAnz)
+            print ("SndWait ",self.getResWait, " per ",tt)
+            if self.tarEla >0:
                  tt=round(1000*self.tarSum/self.tarEla)
                  print ("Ela ", self.tarEla, "Res",self.tarSum, "Avg ",tt)
-         print ("Targ Busy ",self.tarBusy)         
-         print ("Last",self.lasthash)
-         print ("New ",self.newhash)
-         print ("Diffi ",self.diffi)
+            tt=round(self.tarBusy/self.reqAnz)
+            print ("Targ Busy ",self.tarBusy," per ",tt)         
+        print ("Last",self.lasthash)
+        print ("New ",self.newhash)
+        print ("Diffi ",self.diffi)
