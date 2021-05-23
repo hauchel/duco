@@ -34,8 +34,8 @@ from kbhit import KBHit
 kb = KBHit()
 
 def query(tick):    
-    print("Press any key to abort")
-    print("keyboard only checked every 10 seconds <<<<")
+    print("Press any key to abort  <<<<")
+    print("keyboard only checked every second")
     logN=time.strftime("_%d_%H.txt", time.localtime())
     logN='logs/min_'+username+logN
     print("Logfile",logN)
@@ -63,9 +63,12 @@ def query(tick):
         print(tx)
         logf.write(tx+"\n")
         sumH=0
+        sumArd=0
         for k in dic:
             txha='{:10.1f}'.format(k['hashrate'])
             sumH+=k['hashrate']
+            if k['hashrate'] <250:      #Arduino only
+                sumArd+=k['hashrate']
             txid=' {:7}'.format(k['identifier'][:7])
             txso='{:25}'.format(k['software'][:25])
             txsh='{:10.3f}'.format(k['sharetime'])
@@ -75,8 +78,7 @@ def query(tick):
             tx=txid+txso+txdi+txac+txre+txha+txsh
             print (tx)
             logf.write(tx+"\n")
-        tx='                    Sum{:10.1f}'.format(sumH)
-        tx=txti+'                      '+tx
+        tx=txti+'      Tot{:10.1f}                       Ard{:10.1f}'.format(sumH,sumArd)
         print (tx)
         logf.write(tx+"\n")
 
