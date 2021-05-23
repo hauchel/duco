@@ -66,7 +66,7 @@ def get_config():
 def overview():
     print("cons",len(myCons))
     for c in myCons:
-        print (c.target, c.getSlStat(),c.sta,c.connected,c.conTimOut)
+        print (c.target, c.getSlStat(),c.sta,c.conTimOut)
 
 def info():
     gc.collect()

@@ -99,12 +99,12 @@ class i2ct():
         self.send(tx)
     
     def send4Hash(self):
-        start=time.ticks_ms()
+        ##start=time.ticks_ms()
         self.sendHash('L');
         self.sendHash('M');
         self.sendHash('N');
         self.sendHash('O');
-        print ("Hashes sent ",time.ticks_diff(time.ticks_ms(),start))
+        ##print ("Hashes sent ",time.ticks_diff(time.ticks_ms(),start))
         
     def info(self):
         print(" Free",gc.mem_free())

@@ -1,53 +1,11 @@
-﻿
+﻿This documentation is work in progress. Please see doc folder for more information.
 
 # Overview
 
-I'm running  rigs  with one  ESP8266 12F and n Arduino Mini Pros connected by I2C. ESP runs a MicroPython program which communicates with the server via LAN and the MiniPros via I2C. For each Arduino one connection is made to the server. Technically it's possible to have more MiniPros, but the problem is the time it takes to transfer from / to the server.  The ESP can only work on one Server connection at a time, real computers like Raspis can do something else while the server is busy. 
-
-
-
+I'm running  rigs  with one  ESP8266 12F and n Arduino Mini Pros connected by I2C. ESP runs a MicroPython program which communicates with the server via LAN and the MiniPros via I2C. For each Arduino one connection is made to the server. Technically it's possible to have more MiniPros per ESP, but the problem is the time it takes to transfer from / to the server. The ESP can only work on one server connection at a time, real computers like Raspis can do something else while the server is busy. 
 
 # Hardware
-A rig consists of 3 MiniPro and one ESP, currently those rigs are used:
-Bezeichnung | IP            | S | S | S        
----|---|---|---|---
-|ESP-DF942E |192.168.178.40|11|12|13
-|ESP-DF0369 |192.168.178.42|20|21|22
-|ESP-DF9478 |192.168.178.41|15|16|17
-
-ESP is in 3D-printed Housing (FreeCad esp12L), additionaly a Matrix board 11 rows at (3*3+1) is used to accomodate the additional 2 pullups and the levelshifter for the I2C. One  serves two ESPs
-
-                3.3 V side 
-    grn  blu  blk  red  grn  blu   
-    SDA  SCL  GND  !!!  SDA  SCL    
-    grn  blu  blk  whi  grn  blu   
-                  5 V side
-       
-
-On Breakout board  ESP 12-F  used these wire  colors:
-
-        pink    RST					TXD		white to RX
-            	ADC					RXD		yello to TX
-            	CH_PC			SCL	GPIO5 	blue
-            	GPIO16			SDA	GPIO4	green 
-            	GPIO14				GPIO0	grey
-		        GPIO12				GPIO2	pup VCC
-		    	GPIO13				GPIO15	pup GND
-    	red     VCC			        GND		black
-
-
-For RST and GPIO0 add a 10k Pullup to VCC and button to GND.
-**Reset:**  press pink .
-**Enter programming mode** : hold grey, press pink,  release pink,  release grey
-
-
-
-
-
-
-
-
-
+A rig consists of 3 MiniPro and one ESP.  Each ESP connects via WiFi to the router (e.g. FritzBox)  and gets an IP-address assigned . A MiniPro stores its I2C adress in its EEPROM so it does not forget it when brainwashed . It must be unique per rig, but its clearer  to have different adresses for each MiniPro. 
 
 # Software
 
@@ -138,4 +96,3 @@ At 19:47:10  the time to get the balance was 16 ms.  In the previos 10 seconds t
     21:56:10     2858.861   138     1.622    14.410     20.75
     21:56:20     2860.974   670     2.113    14.252     20.52
     21:56:30     2865.037   461     4.063    14.761     21.26
-

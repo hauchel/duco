@@ -40,7 +40,6 @@ class ccon():
     def __init__(self,targ,tarnam,pool_address,pool_port,rignam):    
         print ("Init ",targ)
         self.target=targ
-        self.connected=False
         self.conTimOut=10
         self.tarnam=tarnam
         self.rignam=rignam
@@ -75,12 +74,10 @@ class ccon():
         try:
             self.soc.connect((self.pool_address,self.pool_port))  
             self.soc.recv(3) #skip version
-            self.connected =True
             self.sta='C'
             print ("Connect took ",time.ticks_diff(time.ticks_ms(),start))
         except Exception as inst:
             print ("Conn Exc TO",self.conTimOut,str(inst))
-            self.connected=False
             self.sta='D'
         
     def reqJob(self,username = "targon"):
@@ -101,7 +98,6 @@ class ccon():
             self.sta='J'
         except Exception as inst:
             print ("getJob Exc "+str(inst))
-            self.connected=False
             self.sta='D'
             return
         tim=time.ticks_diff(time.ticks_ms(),start)
@@ -133,7 +129,6 @@ class ccon():
             self.sta='E'
         except Exception as inst:
             print ("sndRes Exc "+str(inst))
-            self.connected=False
             self.sta='D'
             return
     
@@ -145,7 +140,6 @@ class ccon():
             self.sta='C'
         except Exception as inst:
             print ("getdRes Exc "+str(inst))
-            self.connected=False
             self.sta='D'
             return
         tim=time.ticks_diff(time.ticks_ms(),start)
@@ -154,7 +148,7 @@ class ccon():
         print (self.target,feedback.rstrip())
               
     def close(self):
-        self.connected=False
+        self.sta='D'
         try:
             self.soc.close()
         except Exception as inst:
@@ -250,7 +244,7 @@ class ccon():
         
     def coninfo(self):
          print()
-         print ("Target",self.target," Connected",str(self.connected))
+         print ("Target",self.target," sta",self.sta)
          print ("Name >"+self.tarnam+"< >"+self.ducoId+ "< sendrate"+str(self.sendRate))
          if self.reqAnz>0:
              print ("Requests ",self.reqAnz)

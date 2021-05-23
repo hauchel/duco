@@ -1,4 +1,6 @@
 ﻿
+This document uses slackedit features, might be difficult to read with other readers. And of course this is work in progress.
+
 # Overview
 
 I'm running  rigs  with one  ESP8266 12F and n Arduino Mini Pros connected by I2C. ESP runs a MicroPython program which communicates with the server via LAN and the MiniPros via I2C. For each Arduino one connection is made to the server. The Arduino runs a sketch which does the calculations.
@@ -9,6 +11,15 @@ Why MicroPython? Because Arduino on ESP is aPitA, it takes long to compile and t
 A rig consists of 3 MiniPro and one ESP, currently those rigs are used:
 
 ESP is in 3D-printed Housing (FreeCad esp12L), additionaly a Matrix board 11 rows at (3*3+1) is used to accomodate the additional 2 pullups and the levelshifter for the I2C. One  serves two ESPs
+These are currently used : 
+ESP | IP| S | S | S        
+---|---|---|---|---
+|ESP-DF5B35 |192.168.178.39|25|26|27
+|ESP-DF942E |192.168.178.40|11|12|13
+|ESP-DF9478 |192.168.178.41|15|16|17
+|ESP-DF0369 |192.168.178.42|20|21|22
+
+ESP is in 3D-printed Housing (FreeCad esp12L), additionaly a matrix board 11 rows at (3*3+1) is used to accomodate the additional 2 pullups and the levelshifter for the I2C. One  serves two ESPs
 
                 3.3 V side 
     grn  blu  blk  red  grn  blu   
@@ -16,7 +27,6 @@ ESP is in 3D-printed Housing (FreeCad esp12L), additionaly a Matrix board 11 row
     grn  blu  blk  whi  grn  blu   
                   5 V side
        
-
 On Breakout board  ESP 12-F  used these wire  colors:
 
         pink    RST					TXD		white to RX
@@ -26,12 +36,13 @@ On Breakout board  ESP 12-F  used these wire  colors:
             	GPIO14				GPIO0	grey
 		        GPIO12				GPIO2	pup VCC
 		    	GPIO13				GPIO15	pup GND
-    	red     VCC			        GND		black
+    	red     VCC			        GND 	black
 
 
 For RST and GPIO0 add a 10k Pullup to VCC and button to GND.
 **Reset:**  press pink .
 **Enter programming mode** : hold grey, press pink,  release pink,  release grey
+Fortunately this finger exercise is only required once in order to flash MicroPython.
 
 # Master and Slave
 
@@ -82,7 +93,7 @@ The communication with the server is reflected by status
 sta|   Meaning | Slave  |    Comment
 ---|---|---|---|---
 | D |  disconnected | ?     |   sets runS runR
-| C |  connect succesful  | I|  connect reset  slave
+| C |  connected  | I|  connect reset  slave
 | R |  request sent| I|
 | J |  job received  |I|  hash to slave
 | K |  transf. to slave|B |  Wait for slave 
@@ -100,7 +111,7 @@ sta|   Meaning | Slave  |    Comment
 
 Software consists of
 
- - boot.py		boot script or use your own 
+ -  boot.py		boot script or use your own 
  - webrepl_cfg.py access to ESP via   webREPL Password 
  -  i2ct.py	 
  - duclas.py 
