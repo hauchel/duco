@@ -62,8 +62,10 @@ def query(tick):
         tx=txti+" Running " +' {:2}'.format(len(dic))+"                Diff      Acc/Rej      Hash      Time"
         print(tx)
         logf.write(tx+"\n")
+        sumH=0
         for k in dic:
             txha='{:10.1f}'.format(k['hashrate'])
+            sumH+=k['hashrate']
             txid=' {:7}'.format(k['identifier'][:7])
             txso='{:25}'.format(k['software'][:25])
             txsh='{:10.3f}'.format(k['sharetime'])
@@ -73,7 +75,11 @@ def query(tick):
             tx=txid+txso+txdi+txac+txre+txha+txsh
             print (tx)
             logf.write(tx+"\n")
-        #return
+        tx='                    Sum{:10.1f}'.format(sumH)
+        tx=txti+'                      '+tx
+        print (tx)
+        logf.write(tx+"\n")
+
         if kb.kbhit():
             print ("done")
             logf.close()

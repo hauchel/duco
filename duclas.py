@@ -51,7 +51,7 @@ class ccon():
         self.diffi=5
         self.sta='D'
         self.sendRate=False    # False: let server calculate 
-        self.verbose=True      # False: less prints
+        self.verbose=False      # False: less prints
         self.ducoId="DUCOIDFFDFFFDFFFFFFFFF" #later queried from slave
         self.statReset()
         
