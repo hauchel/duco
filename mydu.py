@@ -79,15 +79,11 @@ def info():
     for c in myCons:
         c.coninfo()
 
-def loop(anz):
+def loop():
     global myCons
-    if anz==0:
-        anz=99999
     allbusy=0       #counter subsequent loops
     ms='?'
-    while anz >0:
-        print ("===Loop ",anz)
-        anz-=1
+    while True:
         allbusy=allbusy+1
         for c in myCons:
             ms=c.mach()
@@ -111,7 +107,7 @@ def menu():
     print ("... then l to loop:")
     if  len(myCons)==0:  #re-running config would duplicate cons
         get_config()
-        loop(0)
+        loop()
     while True:
         print("H>",end=" ")
         ch = getch()  
@@ -139,7 +135,7 @@ def menu():
                 elif ch=="i":
                     info()               
                 elif ch=="l":
-                    loop(0)  
+                    loop()  
                 elif ch=="m":
                     myCons[inp].mach()                     
                 elif ch=="o":

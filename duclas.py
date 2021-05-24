@@ -3,6 +3,7 @@
 
 import socket
 import time
+import uselect
 
 try:
     import requests
@@ -49,6 +50,8 @@ class ccon():
         self.newhash=""
         self.diffi=5
         self.sta='D'
+        self.start=0
+        self.poller=uselect.poll()
         self.sendRate=False    # False: let server calculate 
         self.verbose=False      # False: less prints
         self.ducoId="DUCOIDFFDFFFDFFFFFFFFF" #later queried from slave
@@ -70,12 +73,12 @@ class ccon():
         print ("Connecting...")
         self.soc = socket.socket()
         self.soc.settimeout(self.conTimOut) # low timeout as this blocks, will try again next loop
-        start=time.ticks_ms()
+        self.start=time.ticks_ms()
         try:
             self.soc.connect((self.pool_address,self.pool_port))  
             self.soc.recv(3) #skip version
             self.sta='C'
-            print ("Connect took ",time.ticks_diff(time.ticks_ms(),start))
+            print ("Connect took ",time.ticks_diff(time.ticks_ms(),self.start))
         except Exception as inst:
             print ("Conn Exc TO",self.conTimOut,str(inst))
             self.sta='D'
@@ -86,13 +89,14 @@ class ccon():
         try:
             self.soc.send(bytes(tx, "utf8"))  # Send job request
             self.sta='R'
+            self.poller.register(self.soc,uselect.POLLIN)
+            self.start=time.ticks_ms()
         except Exception as inst:
             print ("ReqJob Exc "+str(inst))
             self.sta='D'
             
     def getJob(self):
         if self.verbose: print("GetJob",self.sta)
-        start=time.ticks_ms()
         try:
             job = self.soc.recv(1024).decode()  # Get work from pool
             self.sta='J'
@@ -100,8 +104,8 @@ class ccon():
             print ("getJob Exc "+str(inst))
             self.sta='D'
             return
-        tim=time.ticks_diff(time.ticks_ms(),start)
-        print ("PER getJob took",tim)
+        tim=time.ticks_diff(time.ticks_ms(),self.start)
+        print (self.target,"PER getJob took",tim)
         self.getJobWait+=tim
         self.reqAnz+=1
         job = job.split(",")  
@@ -127,6 +131,8 @@ class ccon():
         try:
             self.soc.sendall(bytes(tx,'utf8'))
             self.sta='E'
+            self.poller.register(self.soc,uselect.POLLIN)
+            self.start=time.ticks_ms()
         except Exception as inst:
             print ("sndRes Exc "+str(inst))
             self.sta='D'
@@ -134,7 +140,6 @@ class ccon():
     
     def getRes(self):
         if self.verbose: print("GetRes",self.sta)
-        start=time.ticks_ms()
         try:
             feedback = self.soc.recv(100).decode() 
             self.sta='C'
@@ -142,8 +147,8 @@ class ccon():
             print ("getdRes Exc "+str(inst))
             self.sta='D'
             return
-        tim=time.ticks_diff(time.ticks_ms(),start)
-        print ("PER getRes took",tim)
+        tim=time.ticks_diff(time.ticks_ms(),self.start)
+        print (self.target,"PER getRes took",tim)
         self.getResWait+=tim
         print (self.target,feedback.rstrip())
               
@@ -189,7 +194,31 @@ class ccon():
     
     def mach(self):
         # one step in loop
-        # returns slave status
+        # for those waiting for server don't inquire slave:
+        i2.target=self.target
+        t='W'
+        if self.sta=='R': # fetch job
+            if  not self.poller.poll(0):
+                return t
+            self.poller.unregister(self.soc)
+            self.getJob()
+            if self.sta == 'D':
+                  print ("GetJob failed, status",self.sta)
+                  return 'X'
+            self.transfer()
+            return t
+        if self.sta=='E':  # fetch response
+            if  not self.poller.poll(0):
+                return t
+            self.poller.unregister(self.soc)
+  
+            self.getRes()
+            if self.sta=='D':
+                  print ("GetRes failed")
+                  return 'X'
+            return t
+                
+        # slave related
         t=self.getSlStat()  # also switches i2.target
         if self.verbose: print ("*** ",self.target,"sla",t,"sta",self.sta)         
         if self.sta=='D':
@@ -204,13 +233,6 @@ class ccon():
             if self.sta == 'D':
                   print ("ReqJob failed, status",self.sta)
                   return 'X'
-            return t
-        if self.sta=='R':
-            self.getJob()
-            if self.sta == 'D':
-                  print ("GetJob failed, status",self.sta)
-                  return 'X'
-            self.transfer()
             return t
         if t=="C":
             res=self.getResult()
@@ -228,13 +250,7 @@ class ccon():
                   print ("SndRes failed")
                   return 'X'
             return t
-        if self.sta=='E':  # fetch response
-            self.getRes()
-            if self.sta=='D':
-                  print ("GetRes failed")
-                  return 'X'
-            return t
-        
+
         print("Sta Komisch?",self.sta)
         return 'X'
     
