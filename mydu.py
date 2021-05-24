@@ -6,12 +6,6 @@ import time
 import machine
 
 try:
-    import requests
-except ImportError:
-    print("use urequests")
-    import urequests as requests
-
-try:
     import msvcrt
     def kbhit():
         return msvcrt.kbhit()    
@@ -48,7 +42,6 @@ rigname = "None"
 myCons=[]
 
 serv=cserv()
-
 
 def newCon(targ,tarnam):
      myCons.append(ccon(targ,tarnam,serv.pool_address, serv.pool_port,rigname))
@@ -93,6 +86,7 @@ def loop():
             break
         if allbusy>0:
             print("All Bus ",allbusy)
+            gc.collect()    # something useful
             time.sleep(0.1)
     print("Loop Done")
 

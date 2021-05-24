@@ -61,6 +61,7 @@ class ccon():
         self.reqAnz=0
         self.getJobWait=0
         self.getResWait=0
+        self.jobStart=0
         self.tarBusy=0        
         self.tarEla=0
         self.tarSum=0
@@ -70,12 +71,13 @@ class ccon():
         i2.send("A")  # reset slave
         self.getSlStat()
         self.ducoId=self.getDucoId()
-        print ("Connecting...")
+        print (self.target,"Connecting...")
         self.soc = socket.socket()
         self.soc.settimeout(self.conTimOut) # low timeout as this blocks, will try again next loop
         self.start=time.ticks_ms()
         try:
             self.soc.connect((self.pool_address,self.pool_port))  
+            print ("Connected") #TODO remove
             self.soc.recv(3) #skip version
             self.sta='C'
             print ("Connect took ",time.ticks_diff(time.ticks_ms(),self.start))
@@ -91,6 +93,7 @@ class ccon():
             self.sta='R'
             self.poller.register(self.soc,uselect.POLLIN)
             self.start=time.ticks_ms()
+            self.jobStart=self.start
         except Exception as inst:
             print ("ReqJob Exc "+str(inst))
             self.sta='D'
@@ -144,13 +147,15 @@ class ccon():
             feedback = self.soc.recv(100).decode() 
             self.sta='C'
         except Exception as inst:
-            print ("getdRes Exc "+str(inst))
+            print (self.target,"getRes Exc "+str(inst))
             self.sta='D'
             return
-        tim=time.ticks_diff(time.ticks_ms(),self.start)
-        print (self.target,"PER getRes took",tim)
+        now=time.ticks_ms()
+        tim=time.ticks_diff(now,self.start)
+        timtot=time.ticks_diff(now,self.jobStart)
         self.getResWait+=tim
-        print (self.target,feedback.rstrip())
+        print (self.target,"PER getRes took",tim)
+        print (self.target,feedback.rstrip(),"took",timtot) 
               
     def close(self):
         self.sta='D'
@@ -214,7 +219,7 @@ class ccon():
   
             self.getRes()
             if self.sta=='D':
-                  print ("GetRes failed")
+                  print (self.target,"GetRes failed")
                   return 'X'
             return t
                 
