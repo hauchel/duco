@@ -33,6 +33,15 @@ except ImportError:
 from kbhit import KBHit
 kb = KBHit()
 
+def getMiners():
+    try:
+        r=requests.get('https://server.duinocoin.com:5000/miners?username='+username)
+    except Exception as inst:
+        print ("getMiners Exception "+str(inst))
+        return {}
+    jdic=json.loads(r.text)
+    return jdic['result'] 
+    
 def query(tick):    
     print("Press any key to abort  <<<<")
     print("keyboard only checked every second")
@@ -56,9 +65,7 @@ def query(tick):
             rest=tick - time.time() % tick
         time.sleep(tick - time.time() % tick)    # wait exact
         txti=time.strftime("%H:%M:%S", time.localtime())
-        r=requests.get('https://server.duinocoin.com:5000/miners?username='+username)
-        jdic=json.loads(r.text)
-        dic=jdic['result']
+        dic=getMiners()
         tx=txti+" Running " +' {:2}'.format(len(dic))+"                Diff      Acc/Rej      Hash      Time"
         print(tx)
         logf.write(tx+"\n")

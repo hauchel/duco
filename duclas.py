@@ -48,7 +48,7 @@ class ccon():
         self.pool_port=pool_port
         self.lasthash=""
         self.newhash=""
-        self.diffi=5
+        self.difficulty=10
         self.sta='D'
         self.start=0
         self.poller=uselect.poll()
@@ -118,7 +118,7 @@ class ccon():
             #print (job[1])
             self.newhash=job[1]
             #print (job[2])
-            self.diffi=int(job[2])
+            self.difficulty=int(job[2])
         else:
             print ("Joblen?",len(job)," ",str(job),"<")
             self.sta='D'    
@@ -170,6 +170,7 @@ class ccon():
         i2.lasthash=self.lasthash
         i2.newhash=self.newhash
         i2.target=self.target
+        i2.difficulty=self.difficulty
         i2.send4Hash()  # to target
         self.sta='K'
     
@@ -256,7 +257,7 @@ class ccon():
                   return 'X'
             return t
 
-        print("Sta Komisch?",self.sta)
+        print(self.target,"ERR Sta Komisch?",self.sta)
         return 'X'
     
     def setVerbose(self,x):
@@ -281,4 +282,4 @@ class ccon():
             print ("Targ Busy ",self.tarBusy," per ",tt)         
         print ("Last",self.lasthash)
         print ("New ",self.newhash)
-        print ("Diffi ",self.diffi)
+        print ("Diffi ",self.difficulty)

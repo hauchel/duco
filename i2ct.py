@@ -9,6 +9,7 @@ import gc
 import time
 
 class i2ct():
+            
     def __init__(self):
         self.pinSDA=machine.Pin(4)
         self.pinSCL=machine.Pin(5)
@@ -17,9 +18,10 @@ class i2ct():
         # debug only:
         self.inp=0
         self.inpAkt=False
-        self.lasthash="2cbac32719086e89b856e17bd2a34f21032a51d2"
+        self.lasthash="2cbac32719086e89b856e17bd2a34f21032a51d2" #debug only
         self.newhash ="0a536a14db3b230247d4d90c3b33abff25b64382"
-       
+        self.difficulty=10
+
     def request(self, anz):
         try:
             rec=self.con.readfrom(self.target,anz)
@@ -81,7 +83,13 @@ class i2ct():
         rec=self.request(22)[:22] # must be 22
         print (rec)
         return rec.decode("utf-8")
-               
+
+    def setDifficulty(self):
+        if self.difficulty>99: 
+            self.difficulty=99
+        tx="D{:02d}".format(self.difficulty)
+        self.send(tx)
+
     def sendHash(self,was):
         #print("Sending hash "+was)
         self.check()
@@ -134,6 +142,11 @@ class i2ct():
             try:
                 if tmp=="d":
                      print("scan:",self.con.scan())
+                elif tmp=="e":
+                    print (self.queryElapsed())
+                elif tmp=="f":
+                    self.difficulty=self.inp
+                    self.setDifficulty()
                 elif tmp=="h":
                     self.send4Hash()                
                 elif tmp=="i":
@@ -141,17 +154,15 @@ class i2ct():
                 elif tmp=="q":
                     print (self.queryStatus())
                 elif tmp=="w":
-                    print (self.queryResult())
-                elif tmp=="e":
-                    print (self.queryElapsed())
-                elif tmp=="z":
-                    print (self.queryId())
-                elif tmp=="r":
+                    print (self.queryResult())  
+                elif tmp=="r":  #debug only, response could change if slave still working
                     print("Request ",self.target," ",self.inp)
                     print(self.request(self.inp))
                 elif tmp=="t":
                     self.target=self.inp
                     print("Target ",self.target)
+                elif tmp=="z":
+                    print (self.queryId())
   
                 elif tmp=="A":
                     print("Send A to ",self.target)

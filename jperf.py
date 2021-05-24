@@ -28,14 +28,21 @@ from kbhit import KBHit
 kb = KBHit()
 connected=True
 
-def get_balance():
-     global connected  #TODO error checking
-     r=requests.get('https://server.duinocoin.com:5000/balances/'+username)
-     jdic=json.loads(r.text)
-     dic=jdic['result']
-     return dic['balance']
+def get_balance():    
+    global connected  #TODO error checking
+    try:
+        r=requests.get('https://server.duinocoin.com:5000/balances/'+username)
+    except Exception as inst:
+        print ("get_balance Exception "+str(inst))
+        connected=False
+        return 0
+    connected=True
+    jdic=json.loads(r.text)
+    dic=jdic['result']
+    return dic['balance']
 
 def query():
+        
     anf=0
     bal=0
     prev=0
