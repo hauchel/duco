@@ -73,11 +73,12 @@ def query():
             rest-=1
         time.sleep(tick - time.time() % tick)    # wait exact
         txti=time.strftime("%H:%M:%S", time.localtime())
-        start=datetime.now()
+        #start=datetime.now()
         bal=float(get_balance())
-        zwi=(datetime.now()-start).microseconds
-        ping=round(zwi/1000)
-        txpi = "{:6d}".format(ping) 
+        #zwi=(datetime.now()-start).microseconds
+        #ping=round(zwi/1000)
+        #txpi = "{:6d}".format(ping) 
+        txpi='      '
         dif10=bal-prev
         tx10="{:10.3f}".format(dif10*1000)  # this 10 secs
         dif99=bal-anf
@@ -89,7 +90,7 @@ def query():
             arP=0
         txsu="{:10.3f}".format(su*1000)     # per minute   
         txpd="{:10.2f}".format(su*1440)     # per day
-        txab="{:10.2f}".format(bal)         # abs for logf
+        txab="{:15.6f}".format(bal)         # abs for logf
         tx=txti+" "+tx99+txpi+tx10+txsu+txpd
         print (tx)
         tx=txti+" "+txab+txpi+tx10+txsu+txpd
