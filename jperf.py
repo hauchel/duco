@@ -12,6 +12,8 @@
 
 
 username = "targon"
+miners={} # filled by getMiners 
+
 try:
     import privusers as user
 except ImportError:
@@ -19,7 +21,6 @@ except ImportError:
     print("user=['user0','user1','user2']")
 
 import time
-from datetime import datetime
 import sys
 import json
 import requests
@@ -28,12 +29,31 @@ from kbhit import KBHit
 kb = KBHit()
 connected=True
 
-def get_balance():    
-    global connected  #TODO error checking
+def getMiners():
+    global miners
+    try:
+        r=requests.get('https://server.duinocoin.com:5000/miners?username='+username)
+    except Exception as inst:
+        print ("getMiners Exception "+str(inst))
+        return 99
+    jdic=json.loads(r.text)
+    miners=jdic['result']
+    return len(miners)
+
+def getHashTotal():
+    global miners # must be filled by getMiners first
+    hash=0;
+    for m in miners:
+        hash+=m['hashrate']
+    return round(hash)
+
+
+def getBalance():    
+    global connected  #TODO improve error checking
     try:
         r=requests.get('https://server.duinocoin.com:5000/balances/'+username)
     except Exception as inst:
-        print ("get_balance Exception "+str(inst))
+        print ("getBalance Exception "+str(inst))
         connected=False
         return 0
     connected=True
@@ -47,7 +67,7 @@ def query():
     bal=0
     prev=0
     print("One Moment...")
-    anf=float(get_balance())
+    anf=float(getBalance())
     prev=anf
     ar=[0,0,0,0,0,0]
     su=0
@@ -60,8 +80,8 @@ def query():
     tx="Starting "+time.strftime("%c", time.localtime())+" with "+str(anf )
     logf.write(tx+"\n")
     print(tx)
-    print("values below in milliDuco                        ")
-    print( "Time            Total  ping    10 sec    minute    Duco/d")  
+    print("values below in milliDuco, allow 1 minute settling time")
+    print( "Time          Total   Hash Mnr    10 sec    Minute    Duco/d")  
     while True:
         rest=tick - time.time() % tick   #time to sleep
         while rest>1:
@@ -73,16 +93,15 @@ def query():
             rest-=1
         time.sleep(tick - time.time() % tick)    # wait exact
         txti=time.strftime("%H:%M:%S", time.localtime())
-        #start=datetime.now()
-        bal=float(get_balance())
-        #zwi=(datetime.now()-start).microseconds
-        #ping=round(zwi/1000)
-        #txpi = "{:6d}".format(ping) 
-        txpi='      '
+        # REST api
+        bal=float(getBalance())
+        txmi = "  {:2d}".format(getMiners())    
+        txha = " {:6d}".format(getHashTotal()) 
+        # prepare
         dif10=bal-prev
         tx10="{:10.3f}".format(dif10*1000)  # this 10 secs
         dif99=bal-anf
-        tx99="{:12.3f}".format(dif99*1000)  # from start
+        tx99="{:10.3f}".format(dif99*1000)  # from start
         su=su-ar[arP]+dif10                 # moving average / min
         ar[arP]=dif10
         arP+=1
@@ -91,9 +110,10 @@ def query():
         txsu="{:10.3f}".format(su*1000)     # per minute   
         txpd="{:10.2f}".format(su*1440)     # per day
         txab="{:15.6f}".format(bal)         # abs for logf
-        tx=txti+" "+tx99+txpi+tx10+txsu+txpd
+        # write
+        tx=txti+" "+tx99+txha+txmi+tx10+txsu+txpd
         print (tx)
-        tx=txti+" "+txab+txpi+tx10+txsu+txpd
+        tx=txti+" "+txab+txha+txmi+tx10+txsu+txpd
         logf.write(tx+"\n")
         prev=bal
         if not connected:   #something went wrong
@@ -160,7 +180,7 @@ def menu():
                 if ch=="a":
                     pass
                 elif ch=="b":
-                    print("Balance ",get_balance())
+                    print("Balance ",getBalance())
                 elif ch=="q":
                     query()
                 elif ch=="s":

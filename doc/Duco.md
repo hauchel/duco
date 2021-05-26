@@ -82,6 +82,14 @@ Slaves only send when active, else they wait.
 Slave then starts calculating and sends back 
 As the I2C solution works so flawlessly and the Serial is very helpful  for debugging ... 
 
+## SPI Communication
+SPI is very fast serial communication, but only 1:1. The slaves could be daisy-chained, but this makes wiring  and software more complicated.
+
+    Master		Slave	Slave
+     SCLK	-->	---		--
+       DO  	-->	DI
+        		DO -->	DI	
+		DI        	<--	DO 
 
 ## I2C Communication
 
@@ -119,38 +127,96 @@ The communication with the server is reflected by status:
     |R  |request sent         |I    |                    
     |J  |job received         |I    |hash to slave       
     |K  |transf. to slave     |B    |Wait for slave      
-    |K  |transf. to slave     |C    |slave C, reset      
+    |K  |transf. to slave     |C    |slave C, reset slave 
+    |W  |wait for send        |I    |to compensate fast slave
     |E  |result sent          |I    |                    
     |F  |result response Error|I    |->C                 
     |G  |result response Good |I    |->C                 
 
+Polling of the response occurs R and E 
 There are PERformance times taken:
 
-    PER getJob took  779
-    PER getRes took  780
+    PER getJob time between sending request an receiving result
+    PER getRes time between sending result and receiving response
+    
+This is an example log from an ESP while running 3 slaves 25,26,27:
 
+
+    25 PER getJob took 1729
+    26 PER getJob took 1118
+    27 PER getJob took 1150
+    All Bus  1   all slaves busy, wait 100 ms
+    ...
+    All Bus  6
+    25 ela: 1251 res: 241 rat: 193   25 completed 1251 ms
+    25 PER getRes took 196			 	
+    25 GOOD took 3331				total job time
+    27 ela: 1650 res: 319 rat: 193	27 completed
+    26 ela: 1989 res: 384 rat: 193
+    25 PER getJob took 1317
+    25 ela: 1363 res: 260 rat: 191
+    26 PER getRes took 1922
+    26 GOOD took 5097
+    27 PER getRes took 2487
+    27 GOOD took 5349
+    25 PER getRes took 4721
+    25 GOOD took 7468
+    26 PER getJob took 5322
+    27 PER getJob took 5096
+    27 ela: 387 res: 74 rat: 191
+    26 ela: 1353 res: 259 rat: 191
+    25 PER getJob took 2678
+    26 PER getRes took 524
+    26 GOOD took 7262
+    27 PER getRes took 1634
+    27 GOOD took 7179
+    26 PER getJob took 1945
+    27 PER getJob took
 
 # Software
 
 Software consists of
 
- -  boot.py		boot script or use your own 
+ -  boot .py		boot script or use your own 
  - webrepl_cfg.py access to ESP via   webREPL Password 
- -  i2ct.py	 
- - duclas.py 
- - mydu.py 
- - Setup
+ -  i2ct .py	 
+ - duclas .py 
+ - mydu .py 
+
 
 One major challenge is that for compiling the python code there must be enough free RAM available. Compiling is triggered by the first import statement, subsequent imports don't need this. use dir() to check the compiled modules
 
-# boot.py
+## boot
 
+## i2ct
+i2ct provides routines for the basic functions which are called by mydu. additionally it's suited to debug the I2C behavior:
 
-the cluster consists of several unit
-# boot.py
+    >>> k=i2ct()
+    >>> k.menu()
+    I>
+    d, q,w,e,z  h,r, q,w t  x  A H L M N O S
+    d	shows I2C devices like scan: [25, 26, 27]
+    t	select target: 26t  would select 26
+    i	infos about selected target
+        Free 20464
+	              0123456789012345678901234567890123456789
+	    Last  40 >2cbac32719086e89b856e17bd2a34f21032a51d2<
+	    New   40 >0a536a14db3b230247d4d90c3b33abff25b64382<
+	q	query status of target
+	w	query result of target
+	e	query elapsed of target
+	z	query DUCOID of target
+	h	sends hashes shown in info above and triggers calculation
+	x	eXit
+	capital letters are directly sent, see source, example:
+	A	resets status to I
+	L	send lasthash[0:20]
+	M	send lasthash[20:40]
+	N	send newhash[0:20]
+	O	send newhash[20:40] (+slave starts calc.)
+	H	calculate
+    
 
-
-the cluster consists of several unit
 ## mydu
 The main program has several commands for debugging purposes,
 For daily ops only 3 are needed:
@@ -337,6 +403,11 @@ Note right of Server: mydu waits (request time)
 Server-->>mydu: here you are
 
 ```
+
+
+
+
+
 
 
 

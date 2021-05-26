@@ -77,6 +77,9 @@ def loop():
     global myCons
     allbusy=0       #counter subsequent loops
     ms='?'
+    now=time.ticks_ms()
+    for c in myCons:   #
+        c.jobStart=now
     while True:
         allbusy=allbusy+1
         for c in myCons:
@@ -137,9 +140,6 @@ def menu():
                     overview()  
                 elif ch=="q":
                     print (myCons[inp].getSlStat())
-                elif ch=="R":
-                    print ("Soft Reset ")  ## does not soft_reset...
-                    return
                 elif ch=="s":
                     get_config()
                 elif ch=="t":
@@ -158,9 +158,7 @@ def menu():
                 elif ch=="x":
                     for c in myCons:
                         c.close()
-                    print ("Thanks for using mydu, you're in expert mode now.")
-                    print ("To have fun again just type mydu.menu(), but do not s")
-                    print ("To reboot ^D or in webREPL  machine.soft_reset())")
+                    print ("Thanks for using mydu")
                     return
                 else:
                     print("else"+str(ord(ch)))

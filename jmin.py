@@ -57,7 +57,6 @@ def sort(ldic):
     li=[]   #fill list with keys ordered by sortby
     for (key, value) in sorted(ks.items(),key=itemgetter(1), reverse=sortrev):
         li.append(key)
-    print (li)
     return li
 
 def unsort(ldic):
@@ -118,7 +117,7 @@ def query(tick):
             tx=txid+txso+txdi+txac+txre+txha+txsh
             print (tx)
             logf.write(tx+"\n")
-        tx=txti+'      Tot{:10.1f}                       Ard{:10.1f}'.format(sumH,sumArd)
+        tx=txti+'      Tot{:10.1f}                   Arduino{:10.1f}'.format(sumH,sumArd)
         print (tx)
         logf.write(tx+"\n")
 

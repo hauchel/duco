@@ -4,18 +4,20 @@ Most important  stable voltage supply 3.3 V
 
 On Breakout board  ESP 12-F i used these wire colors:
 
-        pink    RST					TXD		white to RX
-            	ADC					RXD		yello to TX
-            	CH_PC			SCL	GPIO5 	blue
-            	GPIO16			SDA	GPIO4	green 
-            	GPIO14				GPIO0	grey
-		        GPIO12				GPIO2	pup VCC
-		    	GPIO13				GPIO15	pup GND
-    	red     VCC			        GND		black
+		pink	RST					TXD		white to RX
+				ADC					RXD		yello to TX
+				CH_PC			SCL	GPIO5 	blue
+				GPIO16			SDA	GPIO4	green 
+				GPIO14				GPIO0	grey
+				GPIO12				GPIO2	pup VCC
+				GPIO13				GPIO15	pup GND
+		red		VCC					GND		black
 
 
 For RST and GPIO0 add a 10k Pullup to VCC and button to GND.
+
 **Reset:**  press pink .
+
 **Enter programming mode** : hold grey, press pink,  release pink,  release grey
 
 
@@ -29,9 +31,10 @@ Use espSer.py for first Steps
 
 Install according to https://docs.micropython.org/en/latest/esp8266/tutorial/intro.html
 
-download bin
-pip install esptool
-With   connected to Com3 PC Flash bin:
+ - [ ] download bin
+ - [ ] pip install esptool
+ - [ ] With   connected to Com3 PC Flash bin:
+
 Set to programming mode, then:
         
     python -m esptool --port com3 erase_flash
@@ -57,7 +60,7 @@ Connect via Serial with 115200 (e.g. TeraTerm):
     >MicroPython v1.15 on 2021-04-18; ESP module with ESP8266
     Type "help()" for more information.
 
-In boot.py modify WLAN credentials, then upload  using ampy on comx (after leaving TeraTerm). If you are happy with the WebREPL password 'p' also upload webrepl_cfg.py: 
+In boot.py modify WLAN credentials (for STA_IF), then upload  using ampy on comx (after leaving TeraTerm). If you are happy with the WebREPL password 'p' also upload webrepl_cfg.py: 
 
     ampy --port COM3 put boot.py boot.py
     ampy --port COM3 put webrepl_cfg.py webrepl_cfg.py
@@ -100,10 +103,15 @@ then press button Connect and provide the password p
 
 
 ## Wifi
-The password for the WiFi is micropythoN (note the upper-case N). Its IP address will be 192.168.4.1 once you connect to its network.
- This is not used and intentionally disabled
+The password for the WiFi hotspot (AP_IF) is micropythoN (note the upper-case N).  Its IP address will be 192.168.4.1 once you connect to its network.
+This is not used and hots intentionally disabled in boot.py:
 
- From windows need to connect via wifi, then open putty 
+    import network
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect('FRITZ!Box 7312','30728671214167815478')
+    hots = network.WLAN(network.AP_IF)
+    hots.active(False)
 
 
 

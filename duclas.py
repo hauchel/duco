@@ -48,9 +48,12 @@ class ccon():
         self.pool_port=pool_port
         self.lasthash=""
         self.newhash=""
+        self.result=0
+        self.ela=0
         self.difficulty=10
         self.sta='D'
         self.start=0
+        
         self.poller=uselect.poll()
         self.sendRate=False    # False: let server calculate 
         self.verbose=False      # False: less prints
@@ -123,9 +126,10 @@ class ccon():
             print ("Joblen?",len(job)," ",str(job),"<")
             self.sta='D'    
             
-    def sndRes(self,res,rat):
-        tx=  str(res) +  "," 
+    def sndRes(self):
+        tx=  str(self.result) +  "," 
         if self.sendRate:
+            rat=round(1000*self.result/self.ela)
             tx=tx+ str(rat)  
         tx=  tx+ ","+self.tarnam+"," + self.rignam
         tx=  tx+ "," + self.ducoId
@@ -203,11 +207,11 @@ class ccon():
         # for those waiting for server don't inquire slave:
         i2.target=self.target
         now=time.ticks_ms()
-        t='W'
+        t='Y' 
         if self.sta=='R': # waiting for fetch job
             if  not self.poller.poll(0): #have to avoid beeing caught here
                 tim=time.ticks_diff(now,self.jobStart)
-                if tim>10000:
+                if tim>20000:
                     print (self.target,"R Time? ",tim)
                     self.poller.unregister(self.soc)
                     self.sta='D'
@@ -219,10 +223,13 @@ class ccon():
                   return 'X'
             self.transfer()
             return t
+        if self.sta=='W':      # no waits yet
+                self.sndRes()  # changes state to 'E'
+                return t
         if self.sta=='E':  # fetch response
             if  not self.poller.poll(0):
                 tim=time.ticks_diff(now,self.jobStart)
-                if tim>10000:
+                if tim>20000:
                     print (self.target,"E Time? ",tim)
                     self.poller.unregister(self.soc)
                     self.sta='D'
@@ -239,7 +246,7 @@ class ccon():
         t=self.getSlStat()  # also switches i2.target
         if self.verbose: print ("*** ",self.target,"sla",t,"sta",self.sta)         
         if self.sta=='D':
-            print ("Not Connected:")
+            print (self.target,"Not Connected")
             self.conn()
             return 'X'
         if t=="B":
@@ -248,23 +255,24 @@ class ccon():
         if self.sta=='C':
             self.reqJob()
             if self.sta == 'D':
-                  print ("ReqJob failed, status",self.sta)
+                  print (self.target,"ReqJob failed")
                   return 'X'
             return t
         if t=="C":
-            res=self.getResult()
-            ela=self.getElapsed()
+            self.result=self.getResult()
+            self.ela=self.getElapsed()
             i2.send("A")  # reset slave 
-            if ela!=0:
-                rat=round(1000*res/ela)
-                print(self.target,"ela:",ela,"res:",res,"rat:",rat)
-                self.tarEla+=ela
-                self.tarSum+=res
-                self.sndRes(res,rat)
+            self.sta='W'
+            if self.ela!=0:
+                rat=round(1000*self.result/self.ela)
+                print(self.target,"ela:",self.ela,"res:",self.result,"rat:",rat)
+                self.tarEla+=self.ela
+                self.tarSum+=self.result
+
             else:
                 print ("Ela Zero, why?")
             if self.sta=='D':
-                  print ("SndRes failed")
+                  print (self.target,"SndRes failed")
                   return 'X'
             return t
 
@@ -274,7 +282,6 @@ class ccon():
     def setVerbose(self,x):
         self.verbose=x
         print (self.tarnam," verbose ",str(self.verbose))
-        
         
     def coninfo(self):
         print()

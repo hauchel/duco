@@ -10,8 +10,11 @@ A rig consists of 3 MiniPro and one ESP.  Each ESP connects via WiFi to the rout
 # HMI
 
 The human machine interface exudes the charm of the early 80s of the last century, UPN is used: possibly digits then command. Commands are only one letter, of course upper and lower case are important. A command is executed immediately, no CR required. Due to the limited ressources there is no online help available.
+
 Communication with ESP either via Serial 115200 with a terminal program (i use TeraTerm), or via webREPL, a terminal in a browser connected to a given port, this is part of MicroPython. 
+
 Communication with MiniPro via I2C or Serial, both understand the same commands. As talking I2C is quite difficult, use terminal program with 38400. This is only required for flashing the MiniPro or development/debugging. 
+
 The state of the cluster is also indicated by MiniPro LEDs, they light up when getting an instruction from the ESP or while calculating.
 
 # Software
@@ -43,5 +46,5 @@ calling it with
 
     
 transfers the script mydu.py to ESP with IP 192.168.178.41. 
-Much faster than compiling and flashing ESP with Arduino IDE.
+Slightly faster than compiling and flashing ESP with Arduino IDE.
 
