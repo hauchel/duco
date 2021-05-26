@@ -202,19 +202,30 @@ class ccon():
         # one step in loop
         # for those waiting for server don't inquire slave:
         i2.target=self.target
+        now=time.ticks_ms()
         t='W'
-        if self.sta=='R': # fetch job
-            if  not self.poller.poll(0):
+        if self.sta=='R': # waiting for fetch job
+            if  not self.poller.poll(0): #have to avoid beeing caught here
+                tim=time.ticks_diff(now,self.jobStart)
+                if tim>10000:
+                    print (self.target,"R Time? ",tim)
+                    self.poller.unregister(self.soc)
+                    self.sta='D'
                 return t
             self.poller.unregister(self.soc)
             self.getJob()
             if self.sta == 'D':
-                  print ("GetJob failed, status",self.sta)
+                  print (self.target,"GetJob failed, status",self.sta)
                   return 'X'
             self.transfer()
             return t
         if self.sta=='E':  # fetch response
             if  not self.poller.poll(0):
+                tim=time.ticks_diff(now,self.jobStart)
+                if tim>10000:
+                    print (self.target,"E Time? ",tim)
+                    self.poller.unregister(self.soc)
+                    self.sta='D'
                 return t
             self.poller.unregister(self.soc)
   

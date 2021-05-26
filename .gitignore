@@ -1,5 +1,6 @@
 # resources folders
 logs*/
+json*/
 # private info
 priv*
 

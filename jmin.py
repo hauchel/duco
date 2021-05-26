@@ -21,8 +21,12 @@ import time
 import sys
 import json
 import requests
+from operator import itemgetter
 
 username='targon'
+sortby='software'  # any key to sort by
+sortrev=False      # order
+
 try:
     import privusers as user
 except ImportError:
@@ -40,7 +44,31 @@ def getMiners():
         print ("getMiners Exception "+str(inst))
         return {}
     jdic=json.loads(r.text)
-    return jdic['result'] 
+    return jdic['result']    #  list of #miners dicts {}
+
+def sort(ldic):
+    # global sortby has key interested in
+    # returns list of numbers pointing to entry in ldic
+    ks=dict()
+    n=0
+    for d in ldic: # dictionary of sortby
+        ks[n]= d[sortby]
+        n+=1
+    li=[]   #fill list with keys ordered by sortby
+    for (key, value) in sorted(ks.items(),key=itemgetter(1), reverse=sortrev):
+        li.append(key)
+    print (li)
+    return li
+
+def unsort(ldic):
+    # keys interested in
+    li=[]
+    n=0
+    for l in ldic:
+        li.append(n)
+        n+=1
+    return li
+    
     
 def query(tick):    
     print("Press any key to abort  <<<<")
@@ -71,7 +99,12 @@ def query(tick):
         logf.write(tx+"\n")
         sumH=0
         sumArd=0
-        for k in dic:
+        if sortby=='':
+            li=unsort(dic)
+        else:
+            li=sort(dic)
+        for n in li:
+            k=dic[n]
             txha='{:10.1f}'.format(k['hashrate'])
             sumH+=k['hashrate']
             if k['hashrate'] <250:      #Arduino only
@@ -120,19 +153,29 @@ def hilfe():
     print("              \n\
 j  Json with tick n   \n\
 q  Query  tick 10        \n\
-s  Show users   \n\
+\n\
+a  sort by accepted  \n\
+h  sort by hashrate  \n\
+n  no sort \n\
+s  sort by software  \n\
+t  sort by time  \n\
+r toggle reverse \n\
+\n\
+f  show Friends   \n\
 u  switch to User n then query fast      \n\
 x  eXit          \n\
  \n")
         
 def menu():   
     global username
+    global sortby
+    global sortrev
     inpAkt=False
     inp=0
     query(10)
     # here after keypress 
     while True:
-        #print("M>",end=" ")
+        #print("M>",end=" ")# does not print
         print("M>")
         ch = kb.getch()  
         if ((ch >= '0') and (ch <= '9')):
@@ -147,15 +190,29 @@ def menu():
             inpAkt=False
             try:
                 if ch=="a":
-                    pass
+                    sortby='accepted'
+                    print('Sort by',sortby)
+                elif ch=="f":
+                    showusers()      
+                elif ch=="h":
+                    sortby='hashrate'       
+                    print('Sort by',sortby)
                 elif ch=="j":
                     query(inp)
                 elif ch=="n":
-                    pass
+                    sortby=''
+                    print('No Sort')
                 elif ch=="q":
                     query(10)
+                elif ch=="r":
+                    sortrev= not sortrev
+                    print('Sort reverse',sortrev)
                 elif ch=="s":
-                    showusers()                         
+                    sortby='software'
+                    print('Sort by',sortby)
+                elif ch=="t":
+                    sortby='sharetime'
+                    print('Sort by',sortby)
                 elif ch=="u":
                     switchuser(inp)
                     query(2)

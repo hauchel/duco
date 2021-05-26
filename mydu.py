@@ -3,7 +3,6 @@
 import sys
 import gc
 import time
-import machine
 
 try:
     import msvcrt
@@ -58,8 +57,10 @@ def get_config():
         
 def overview():
     print("cons",len(myCons))
+    now=time.ticks_ms()
     for c in myCons:
-        print (c.target, c.getSlStat(),c.sta,c.conTimOut)
+        tim=time.ticks_diff(now,c.jobStart)    
+        print (c.target, c.getSlStat(),c.sta,"sin", tim)
 
 def info():
     gc.collect()
@@ -138,7 +139,6 @@ def menu():
                     print (myCons[inp].getSlStat())
                 elif ch=="R":
                     print ("Soft Reset ")  ## does not soft_reset...
-                    machine.soft_reset()
                     return
                 elif ch=="s":
                     get_config()
