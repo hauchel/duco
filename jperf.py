@@ -13,6 +13,7 @@
 
 username = "targon"
 miners={} # filled by getMiners 
+tick=10
 
 try:
     import privusers as user
@@ -61,8 +62,7 @@ def getBalance():
     dic=jdic['result']
     return dic['balance']
 
-def query():
-        
+def query(): 
     anf=0
     bal=0
     prev=0
@@ -72,7 +72,6 @@ def query():
     ar=[0,0,0,0,0,0]
     su=0
     arP=0
-    tick=10
     logN=time.strftime("_%d_%H.txt", time.localtime())
     logN='logs/perf_'+username+logN
     logf = open(logN, "a")
@@ -159,6 +158,7 @@ x  eXit          \n\
         
 def menu():   
     global username
+    global tick
     inpAkt=False
     inp=0
     query()
@@ -181,6 +181,12 @@ def menu():
                     pass
                 elif ch=="b":
                     print("Balance ",getBalance())
+                elif ch=="f":
+                    tick=2
+                    query()
+                elif ch=="n":
+                    tick=10
+                    query()                    
                 elif ch=="q":
                     query()
                 elif ch=="s":

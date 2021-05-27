@@ -18,6 +18,7 @@ import requests
 from kbhit import KBHit
 kb = KBHit()
 connected=True
+tick=10
 
 def get_balances():    
     global connected  #TODO error checking
@@ -75,8 +76,7 @@ def readfiles():
     print ("changed",len(dc))
 
 def query():
-    print("One Moment...")
-    tick=10
+    print("Using tick",tick,""One Moment...")
     print( "Time            Total  ping    10 sec    minute    Duco/d")  
     while True:
         rest=tick - time.time() % tick   #time to sleep
@@ -98,6 +98,8 @@ def hilfe():
     print("              \n\
 a  Average  #TODO        \n\
 b  Balance               \n\
+f  Fast\n\
+n  Normal \n\
 q  query         \n\
 s  Showusers     \n\
 u  switchUser, e.g. 3u     \n\
@@ -127,6 +129,12 @@ def menu():
                     pass
                 elif ch=="b":
                     print("Balances",get_balances())
+                elif ch=="f":
+                    tick=2
+                    query()
+                elif ch=="n":
+                    tick=10
+                    query()
                 elif ch=="q":
                     query()
                 elif ch=="r":

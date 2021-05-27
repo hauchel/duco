@@ -78,7 +78,7 @@ def loop():
     allbusy=0       #counter subsequent loops
     ms='?'
     now=time.ticks_ms()
-    for c in myCons:   #
+    for c in myCons:   # in case of break 
         c.jobStart=now
     while True:
         allbusy=allbusy+1

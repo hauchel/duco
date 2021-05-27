@@ -158,7 +158,7 @@ h  sort by hashrate  \n\
 n  no sort \n\
 s  sort by software  \n\
 t  sort by time  \n\
-r toggle reverse \n\
+r  toggle reverse \n\
 \n\
 f  show Friends   \n\
 u  switch to User n then query fast      \n\
