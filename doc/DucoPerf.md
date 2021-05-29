@@ -1,8 +1,12 @@
 ﻿## Overview
 
-In Duino-Coin the hashrates are an important issue. The values shown somehow yield in Ducos, but it is not clear how, because it depends on many parameters.  
-Performance means Ducos per day and that's what really counts.
-To improve the performance of my humble rigs i was interested in the actual increase of my balance while running different number of miners. The publicly available data from the  REST API (https://github.com/dansinclair25/duco-rest-api)  is collected and shown on the console by two python scripts. 
+In Duino-Coin the hashrates are an important issue. The values shown somehow yield in Ducos, but it is not clear how, because it depends on many parameters.  But Performance means Ducos per day and that's what really counts.
+
+To improve the performance of my humble rigs i was interested in the actual increase of my balance while running different number of miners. 
+
+The publicly available data from the  REST API (https://github.com/dansinclair25/duco-rest-api)  is collected and shown on the console by two python scripts.
+ 
+It turned out that these scripts are helpful to compare the performance of other users miners.
 
 ## Installation
 
@@ -65,12 +69,19 @@ After the first few lines are shown, press any key:
 When starting the script i owned 423.57... Ducos
 The values shown for some columns are  milliDuco i.e. 1/1000 of a Duco.
 Then each 10 seconds the REST API is inquired, the data printed and written to the logfile.
+
 **Time** is localtime
+
 **Total** the current difference of balance and starting value
+
 **Hash** is the sum of all hashrates of the miners
+
 **Mnr** is the number of miners currently running
+
 **10 sec**  is the balance difference obtained in the last 10 seconds
+
 **Minute** is the floating avarage of the last 6 values
+
 **Duco/d** then shows this as  actual Ducos/day
 
 It creates a logfile in the directory logs, name contains the username, the day of month and the hour it was started. If running several times an hour the information is appended in the log.
@@ -84,6 +95,7 @@ These commands are available
     n  Normal mode: tick 10 seconds
     x  eXit
 
+o shows the users as provided in privusers.py, swith to this user by entering a number then u, e.g 
 ## jmin
 Invoke jmin.py, optionally a username can be provided as parameter.
 After the first few lines are shown, press any key:
@@ -113,14 +125,21 @@ After the first few lines are shown, press any key:
     21:09:00      Tot    1548.0                   Arduino    1548.0
     Terminated
     targon M>
-At 21:09 12 miners were running . These values are shown for each miner
+At 21:09 12 miners were running . These values are shown for each miner:
+
 The **ID** of the rig with 7 chars and the **software** with 25 chars
+
 **Diff** the difficulty assigned
+
 **Acc/Rej** number of accepted and rejected jobs
+
 **Hash** the hashrate. As i don't provide the hashrate to the server, the estimated rate is shown
+
 **Time** the time between the server sending the job and getting the result
+
 Then the **Total** of all hashrates and the total of **Arduino** hashrates (below 200) is shown.
-The values are only updated by the server in intervals of 5 , so the values only change after 5 jobs are completed.
+
+The values are only updated by the server in intervals of 5 , i.e. the values only change after 5 jobs are completed for a miner.
 
 These commands are available:
 

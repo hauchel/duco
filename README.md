@@ -35,10 +35,11 @@ The MicroPython setup is described in ESPSetup
 
 **Software for Arduino** is in folder yaum, it's the same as Revox repo (sha1 and uniqueID) except the duino.ino.
 
-**Software for Raspi or Windows**, Python3 must be installed:
+**Software for Raspi or Windows**, Python3 must be installed,  See description DucoPerf in folder doc.
 
  - jperf.py		show performance, actual growth of Duco balance 
  - jmin.py		show miners as seen by the server
+
 
 **Other**
 I change the python code on windows (Anaconda Spyder) therefore some batchfiles are used  to transfer the python from windows to ESP, like putmydu.bat:
