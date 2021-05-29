@@ -2,8 +2,10 @@
 
 # Overview
 
-I'm running  rigs  with one  ESP8266 12F and n Arduino Mini Pros connected by I2C. ESP runs a MicroPython program which communicates with the server via LAN and the MiniPros via I2C. For each Arduino one connection is made to the server. Technically it's possible to have many MiniPros per ESP, but the problem is the time it takes to transfer from / to the server. The ESP can only work on one server connection at a time, real computers like Raspis can do something else while the server is busy. Currently having 3 MicroPros per ESP seems to be a good value.
-**Disclaimer:** This approach is not suited to obtain high performance. Actually the MiniPros only work about 15% of the time, the rest is waiting for the server.
+I'm running  rigs  with one  ESP8266 12F and n Arduino Mini Pros connected by I2C. ESP runs a MicroPython program which communicates with the server via LAN and the MiniPros via I2C. For each Arduino one connection is made to the server. Technically it's possible to have many MiniPros per ESP, but the problem is the time it takes to transfer from / to the server.  Currently having 3 MicroPros per ESP seems to be a good value.
+Goal was to have a standalone-miner powered by the sun via accus.
+**Disclaimer:** This approach is not suited to obtain high performance. Actually the MiniPros only work about 60% of the time, the rest is waiting for the server. 
+
 
 # Hardware
 A rig consists of 3 MiniPro and one ESP.  Each ESP connects via WiFi to the router (e.g. FritzBox)  and gets an IP-address assigned . A MiniPro stores its I2C adress in its EEPROM so it does not forget it when brainwashed. It must be unique per rig, but its clearer  to have different adresses for each MiniPro. 
