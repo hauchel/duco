@@ -167,7 +167,7 @@ a  Average  #TODO        \n\
 b  Balance               \n\
 q  query         \n\
  \n\
-s  Showusers     \n\
+o  show Other users     \n\
 u  switchUser, e.g. 3u     \n\
  \n\
 f  Fast mode:    tick 2 seconds \n\
@@ -213,7 +213,7 @@ def menu():
                     query()                    
                 elif ch=="q":
                     query()
-                elif ch=="s":
+                elif ch=="o":
                     showusers()                
                 elif ch=="u":
                     switchuser(inp)

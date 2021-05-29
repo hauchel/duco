@@ -160,16 +160,23 @@ s  sort by software  \n\
 t  sort by time  \n\
 r  toggle reverse \n\
 \n\
-f  show Friends   \n\
+o  show Other users   \n\
 u  switch to User n then query fast      \n\
 x  eXit          \n\
  \n")
         
+def afterSort(myTick):
+    global sortby
+    global sortrev    
+    print('Sort by',sortby)
+    query(myTick)
+    
 def menu():   
     global username
     global sortby
     global sortrev
     inpAkt=False
+    myTick=5    #change by j
     inp=0
     query(10)
     # here after keypress 
@@ -193,37 +200,41 @@ def menu():
             try:
                 if ch=="a":
                     sortby='accepted'
-                    print('Sort by',sortby)
-                elif ch=="f":
-                    showusers()      
+                    afterSort(myTick)
                 elif ch=="h":
-                    sortby='hashrate'       
-                    print('Sort by',sortby)
+                    sortby='hashrate' 
+                    afterSort(myTick)
                 elif ch=="j":
-                    query(inp)
+                    myTick=inp
+                    print("Tick ",myTick)
+                    query(myTick)
                 elif ch=="n":
                     sortby=''
                     print('No Sort')
+                    query(myTick)
+                elif ch=="o":
+                    showusers()      
                 elif ch=="q":
                     query(10)
                 elif ch=="r":
                     sortrev= not sortrev
                     print('Sort reverse',sortrev)
+                    query(myTick)
                 elif ch=="s":
                     sortby='software'
-                    print('Sort by',sortby)
+                    afterSort(myTick) 
                 elif ch=="t":
                     sortby='sharetime'
-                    print('Sort by',sortby)
+                    afterSort(myTick)
                 elif ch=="u":
                     switchuser(inp)
-                    query(2)
+                    query(myTick)
 
                 elif ch=="x":
                     print("thanks for watching")
                     return
                 else:
-                    print("else"+str(ord(ch)))
+                    print("else "+str(ord(ch)))
                     hilfe()
             except Exception as inst:
                 print ("menu Exception "+str(inst))

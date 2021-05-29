@@ -107,16 +107,17 @@ def menu():
         get_config()
         loop()
     while True:
-        print("H>",end=" ")
+        if not inpAkt: print(rigname,">",end='',flush=True)
         ch = getch()  
-        print(ch)
         if ((ch >= '0') and (ch <= '9')):
             if (inpAkt) :
                 inp = inp * 10 + (ord(ch) - 48);
             else:
                 inpAkt = True;
                 inp = ord(ch) - 48;
+            print(ch,end='',flush=True)
         else:
+            print(ch)
             inpAkt=False
             try:
                 if ch=="a":
@@ -144,7 +145,7 @@ def menu():
                     get_config()
                 elif ch=="t":
                     myCons[myc].conTimOut=inp
-                    print (myc," Connection Timeout ",inp)
+                    print (myc,"Connection Timeout ",inp)
                 elif ch=="u":
                     myCons[inp].statReset() 
                     print ("stats reset for",inp)
