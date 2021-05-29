@@ -174,16 +174,19 @@ def menu():
     query(10)
     # here after keypress 
     while True:
-        #print("M>",end=" ")# does not print
-        print("M>")
-        ch = kb.getch()  
+        if not inpAkt: print(username,"M>",end='',flush=True)
+        try:
+            ch = kb.getch()  
+        except Exception as inst:
+            print ("don't use this key, Exception "+str(inst))
+            ch='?'
         if ((ch >= '0') and (ch <= '9')):
             if (inpAkt) :
                 inp = inp * 10 + (ord(ch) - 48);
             else:
                 inpAkt = True;
                 inp = ord(ch) - 48;
-            print(inp)
+            print(ch,end='',flush=True)
         else:
             print(ch)
             inpAkt=False

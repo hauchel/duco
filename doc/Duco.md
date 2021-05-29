@@ -102,36 +102,46 @@ I did not want to change the max size 32 of a I2C message as used in Arduinos wi
               
 |char|Meaning       |Example       |Action by Slave                    
 |---|---|---|---
-|A   |clear flags        |A                        |sets runS to I                     |  |
-|D   |set difficulty     |tbd                     -|                                   |  |
-|E   |* provide exec time|not in ver c             |sets *                             |  |
-|H   |hashme             |H                        |start hashing                      |  |
-|I   |provide ID         |I                        |                                   |  |
-|L   |lastblockhash 0:20 |L4e329de23..             |store                              |  |
-|M   |lastblockhash 20:40|M4e329de23..             |store                              |  |
-|N   |newblockhash 0:20  |N4e329de23..             |store                              |  |
-|O   |newblockhash 0:40  |O4e329de23..             |store start hashig                 |  |
-|R   |*  provide Result  |not in ver c             |                                   |  |
-|S   |*  provide Status  |S                        |runS (runR slCmd)                  |  |
-|V   |set twi Adr        |V8                       |set new Addres and reboot         -|  |
+|A   |clear flags        |A                        |sets runS to I                     |
+|D   |set difficulty     |tbd                     -|                                   |
+|E   |* provide exec time|not in ver c             |sets *                             |
+|H   |hashme             |H                        |start hashing                      |
+|I   |provide ID         |I                        |                                   |
+|L   |lastblockhash 0:20 |L4e329de23..             |store                              |
+|M   |lastblockhash 20:40|M4e329de23..             |store                              |
+|N   |newblockhash 0:20  |N4e329de23..             |store                              |
+|O   |newblockhash 0:40  |O4e329de23..             |store start hashig                 |
+|R   |*  provide Result  |not in ver c             |                                   |
+|S   |*  provide Status  |S                        |runS (runR slCmd)                  |
+|V   |set twi Adr        |V8                       |set new Addres and reboot          |
 
 
 
 # Master and Server
+| Task               | Content
+|---|---
+|Master requests job  |JOB
+|Server sends Job| hash1,hash2,diff
+|Master sends Job to Slave|hash1,hash2,diff,\n
+|Slave send result to Master|res,us,DUCOID\n
+|Master sends result to Server|
+
 The communication with the server is reflected by status:
 
-    |sta|Meaning              |Slave|Comment             
-    |---|---------------------|-----|--------------------
-    |D  |disconnected         |?    |sets runS runR      
-    |C  |connected            |I    |connect reset  slave
-    |R  |request sent         |I    |                    
-    |J  |job received         |I    |hash to slave       
-    |K  |transf. to slave     |B    |Wait for slave      
-    |K  |transf. to slave     |C    |slave C, reset slave 
-    |W  |wait for send        |I    |to compensate fast slave
-    |E  |result sent          |I    |                    
-    |F  |result response Error|I    |->C                 
-    |G  |result response Good |I    |->C                 
+|Sta|Meaning  |Slave|Nxt |Comment
+|:---:|---|:---:|:---:|---
+|D  |disconnected         |?    | -> C|sets runS runR      
+|C  |connected            |I    | -> R|connect reset  slave
+|R  |request sent         |I    | -> J| poll                    
+|J  |job received         |I    | -> K|hash to slave       
+|K  |transf. to slave     |B    | K |Wait for slave C
+|K  |transf. to slave     |C    | -> W|and reset slave 
+|W  |wait for send        |I    | -> E|to compensate fast slave
+|E  |result sent          |I    | -> F|poll                    
+|F  |result response Error|I    | ->C|                 
+|G  |result response Good |I    | ->C    
+
+             
 
 Polling of the response occurs R and E 
 There are PERformance times taken:
@@ -238,28 +248,7 @@ l to
  loop
 o overview 
 i statistic 
-
-Logfile looks like this
-
-    ===Loop  99851
-    *** Targ  20 Sta  C				<- C = MiniPro completed previos calc
-    ela 2863  res  476  rat 166     <- fetched values from MiniPro took 2863 ms to find 476
-    SndRes took  755				<- 755 ms to send result to server
-    GOOD							<- of course 
-    ReqJob took  1431				<- 1431 ms to request a new job
-    Hashes sent  30					<- 30 ms to send hashes to Minipro which starts calculating
-    *** Targ  21 Sta  C				<- next 
-    ela 2707  res  450  rat 166
-    SndRes took  4520				<- oops it took 4.5 seconds to send result
-    GOOD
-    ReqJob took  3669				<- and 3.6 to fetch new job
-    Hashes sent  34
-    *** Targ  22 Sta  C
-    ela 12  res  1  rat 83
-    SndRes took  514
-    GOOD
-    ReqJob took  636
-    Hashes sent  30                  
+              
 
 Average values  when the server is in a good mood:
 

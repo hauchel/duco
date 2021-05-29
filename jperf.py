@@ -32,14 +32,19 @@ connected=True
 
 def getMiners():
     global miners
+    miners={}
     try:
         r=requests.get('https://server.duinocoin.com:5000/miners?username='+username)
+        jdic=json.loads(r.text)
+        if jdic['success']==True:
+                miners=jdic['result']
+                return len(miners)
+        else:
+            print('***getMiners for',username,'success not true')
+            return 99
     except Exception as inst:
-        print ("getMiners Exception "+str(inst))
+        print ("***getMiners Exception "+str(inst))
         return 99
-    jdic=json.loads(r.text)
-    miners=jdic['result']
-    return len(miners)
 
 def getHashTotal():
     global miners # must be filled by getMiners first
@@ -50,24 +55,34 @@ def getHashTotal():
 
 
 def getBalance():    
-    global connected  #TODO improve error checking
+    global connected  
+    connected=False
     try:
         r=requests.get('https://server.duinocoin.com:5000/balances/'+username)
     except Exception as inst:
-        print ("getBalance Exception "+str(inst))
-        connected=False
+        print ("***getBalance Exception "+str(inst))
         return 0
-    connected=True
     jdic=json.loads(r.text)
-    dic=jdic['result']
-    return dic['balance']
+    if jdic['success']==True:
+           dic=jdic['result']
+           connected=True
+           return dic['balance']
+    else:
+        print(jdic['success'])
+        print (r.text)
+        print('***getBalance for',username,'success not true')
+        return 0
 
+ 
 def query(): 
     anf=0
     bal=0
     prev=0
     print("One Moment...")
     anf=float(getBalance())
+    if not connected:
+        print ('***No balance for',username)
+        return
     prev=anf
     ar=[0,0,0,0,0,0]
     su=0
@@ -151,8 +166,13 @@ def hilfe():
 a  Average  #TODO        \n\
 b  Balance               \n\
 q  query         \n\
+ \n\
 s  Showusers     \n\
 u  switchUser, e.g. 3u     \n\
+ \n\
+f  Fast mode:    tick 2 seconds \n\
+n  Normal mode: tick 10 seconds  \n\
+ \n\
 x  eXit          \n\
    \n")
         
@@ -164,15 +184,19 @@ def menu():
     query()
     # here after keypress 
     while True:
-        print("P>",end=" ")
-        ch = kb.getch()  
+        if not inpAkt: print(username,"P>",end='',flush=True)
+        try:
+            ch = kb.getch()  
+        except Exception as inst:
+            print ("Don't use this key, Exception "+str(inst))
+            ch='?'
         if ((ch >= '0') and (ch <= '9')):
             if (inpAkt) :
                 inp = inp * 10 + (ord(ch) - 48);
             else:
                 inpAkt = True;
                 inp = ord(ch) - 48;
-            print(inp)
+            print(ch,end='',flush=True)
         else:
             print(ch)
             inpAkt=False

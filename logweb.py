@@ -134,7 +134,7 @@ def connect(host,port):
     print("Remote WebREPL version:", get_ver(ws))
 
     # Set websocket to send data marked as "binary"
-    ws.ioctl(9, 2)
+    #ws.ioctl(9, 2)
     s.close()
     
     
@@ -158,7 +158,7 @@ def menu():
             inpAkt=False
             try:
                 if ch=="a":
-                    connect('192.168.178.40',8266)
+                    connect('192.168.178.39',8266)
                 elif ch=="b":
                     pass
                 elif ch=="l":

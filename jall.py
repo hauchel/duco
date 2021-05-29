@@ -1,26 +1,22 @@
 # -*- coding: utf-8 -*-
 # should run on win and raspi
 #
-# Performance of duco: every 10 seconds query the balance of user 
-# shows 10 seconds diff, one minute moving average
+# all balances or all miners
 # logs written to /logs   perf_username_day_hour.txt
-# logs contain the total balance while screen shows
-# growth since start of program
 # 
 # see https://github.com/dansinclair25/duco-rest-api
-# {"result":{"balance":187.32699041006376,"username":"targon"},"success":true}\n
-
 
 import time
 import json
 import requests
+from operator import itemgetter
 
 from kbhit import KBHit
 kb = KBHit()
 connected=True
 tick=10
 
-def get_balances():    
+def getBalances():    
     global connected  #TODO error checking
     try:
         r=requests.get('https://server.duinocoin.com:5000/balances')
@@ -31,13 +27,54 @@ def get_balances():
     connected=True
     jdic=json.loads(r.text)
     jdic=jdic['result']
-    jsoN=time.strftime("json/bal__%d_%H%M%S.txt", time.localtime())
+    jsoN=time.strftime("json/bal_%d_%H%M%S.txt", time.localtime())
+    print("to file",jsoN)
+    with open(jsoN, 'w') as outfile:
+        json.dump(jdic, outfile)
+    outfile.close()  # required?
+    return len(jdic)
+
+def getMiners():    
+    global connected  #TODO error checking
+    try:
+        r=requests.get('https://server.duinocoin.com:5000/miners')
+    except Exception as inst:
+        print ("getMiners Exception "+str(inst))
+        connected=False
+        return 0
+    connected=True
+    jdic=json.loads(r.text)
+    jdic=jdic['result']
+    jsoN=time.strftime("json/min_%d_%H%M%S.txt", time.localtime())
     print("to file",jsoN)
     with open(jsoN, 'w') as outfile:
         json.dump(jdic, outfile)
     outfile.close()
+    return len(jdic)
 
-def readfiles():
+
+def readMinfiles():
+    global dp # dict with count[user]
+    global dn # sorted by count
+    np='json/min_28_132855.txt'
+    with open(np) as fil:
+        dpt = json.load(fil)
+        print ("dp has",len(dpt))
+        dp=dict()
+        n=8000
+        for p in dpt:
+            n-=1
+            if n<0:
+                break
+            if 'AVR' in p['software']:
+                try:
+                    dp[p['username']]+=1
+                except:
+                    dp[p['username']] =1
+    dn= sorted(dp.items(),key=itemgetter(1),reverse=True)  
+          
+
+def readBalfiles():
     global dp # dict with balance[user]
     global da 
     global dc
@@ -76,7 +113,7 @@ def readfiles():
     print ("changed",len(dc))
 
 def query():
-    print("Using tick",tick,""One Moment...")
+    print("Using tick",tick,"One Moment...")
     print( "Time            Total  ping    10 sec    minute    Duco/d")  
     while True:
         rest=tick - time.time() % tick   #time to sleep
@@ -89,7 +126,7 @@ def query():
         time.sleep(tick - time.time() % tick)    # wait exact
         txti=time.strftime("%H:%M:%S", time.localtime())
         print (txti)
-        get_balances()
+        getBalances()
         if kb.kbhit():
             print ("done")
             return
@@ -109,10 +146,11 @@ x  eXit          \n\
 def menu():   
     inpAkt=False
     inp=0
+    global tick
     #query()
     # here after keypress 
     while True:
-        print("P>",end=" ")
+        print("A>",end='',flush=True)
         ch = kb.getch()  
         if ((ch >= '0') and (ch <= '9')):
             if (inpAkt) :
@@ -128,17 +166,19 @@ def menu():
                 if ch=="a":
                     pass
                 elif ch=="b":
-                    print("Balances",get_balances())
+                    print("Balances",getBalances())
                 elif ch=="f":
                     tick=2
                     query()
+                elif ch=="m":
+                    print("Miners",getMiners())
                 elif ch=="n":
                     tick=10
                     query()
                 elif ch=="q":
                     query()
                 elif ch=="r":
-                    readfiles()
+                    readMinfiles()
                     print ("read")
                 elif ch=="u":
                     pass
