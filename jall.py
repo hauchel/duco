@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # should run on win and raspi
 #
-# all balances or all miners
-# logs written to /logs   perf_username_day_hour.txt
+# all balances or all miners, some experiments
+# results written to /json
 # 
 # see https://github.com/dansinclair25/duco-rest-api
 
@@ -10,6 +10,8 @@ import time
 import json
 import requests
 from operator import itemgetter
+miners={}   #global, set by getMineers
+
 
 from kbhit import KBHit
 kb = KBHit()
@@ -36,6 +38,8 @@ def getBalances():
 
 def getMiners():    
     global connected  #TODO error checking
+    global miners
+    print('Please Wait...')
     try:
         r=requests.get('https://server.duinocoin.com:5000/miners')
     except Exception as inst:
@@ -44,35 +48,49 @@ def getMiners():
         return 0
     connected=True
     jdic=json.loads(r.text)
-    jdic=jdic['result']
+    miners=jdic['result']
     jsoN=time.strftime("json/min_%d_%H%M%S.txt", time.localtime())
     print("to file",jsoN)
     with open(jsoN, 'w') as outfile:
-        json.dump(jdic, outfile)
+        json.dump(miners, outfile)
     outfile.close()
-    return len(jdic)
+    return len(miners)
 
 
-def readMinfiles():
-    global dp # dict with count[user]
+def topAVR(min):
+    global miners 
     global dn # sorted by count
-    np='json/min_28_132855.txt'
+    print ("Miners has",len(miners))
+    dp=dict()
+    n=8000
+    for p in miners:
+        n-=1
+        if n<0:
+            break
+        if 'AVR' in p['software']:
+            try:
+                dp[p['username']]+=1
+            except:
+                dp[p['username']] =1
+    dn= sorted(dp.items(),key=itemgetter(1),reverse=True)  # list of user,count
+    print ("Count AVR Miners ge",min)
+    str="users=['targon'"
+    for m in dn:    # user,count
+        if m[1]<min:
+            break
+        print(m[0],m[1])
+        str+=",'"+m[0]+"'"
+    str+="]"    
+    print (str)
+        
+
+def readMinfile():
+    global miners
+    np='json/min_30_073631.txt'
     with open(np) as fil:
-        dpt = json.load(fil)
-        print ("dp has",len(dpt))
-        dp=dict()
-        n=8000
-        for p in dpt:
-            n-=1
-            if n<0:
-                break
-            if 'AVR' in p['software']:
-                try:
-                    dp[p['username']]+=1
-                except:
-                    dp[p['username']] =1
-    dn= sorted(dp.items(),key=itemgetter(1),reverse=True)  
-          
+        miners = json.load(fil)
+        print ("miners has",len(miners))
+ 
 
 def readBalfiles():
     global dp # dict with balance[user]
@@ -133,12 +151,12 @@ def query():
 
 def hilfe():
     print("              \n\
-a  Average  #TODO        \n\
-b  Balance               \n\
+b  Balances               \n\
 f  Fast\n\
 n  Normal \n\
-q  query         \n\
-s  Showusers     \n\
+m  miners, then only        \n\
+   a  top AVR users e.g. 20a    \n\
+t  top AVR Showusers     \n\
 u  switchUser, e.g. 3u     \n\
 x  eXit          \n\
    \n")
@@ -164,7 +182,7 @@ def menu():
             inpAkt=False
             try:
                 if ch=="a":
-                    pass
+                    topAVR(inp)
                 elif ch=="b":
                     print("Balances",getBalances())
                 elif ch=="f":
@@ -178,8 +196,11 @@ def menu():
                 elif ch=="q":
                     query()
                 elif ch=="r":
-                    readMinfiles()
+                    readMinfile()
                     print ("read")
+                elif ch=="t":
+                    readMinfile()
+                    print ("read")                    
                 elif ch=="u":
                     pass
                     query()              

@@ -139,12 +139,12 @@ Terminal:
     Finding Server...
     targon, welcome to mydu. Use s to start:
     ... then l to loop:
-    Rig 24
+    Rig 39
     All Bus  1
     All Bus  2
 
 Thats what i love with computers, they do exactly what you tell them to do.
-There are no  slaves, so all slaves are are busy.
+There are no  slaves, so all slaves are busy.
 Press any key to stop this, then use i to inquire
 
     All Bus  21
@@ -153,7 +153,7 @@ Press any key to stop this, then use i to inquire
     H> i
     Available Slaves: []
     Free 19856
-    rigname Rig 24
+    rigname Rig 39
     0  Cons:
     H>
 

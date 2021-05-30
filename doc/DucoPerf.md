@@ -68,34 +68,66 @@ After the first few lines are shown, press any key:
 
 When starting the script i owned 423.57... Ducos
 The values shown for some columns are  milliDuco i.e. 1/1000 of a Duco.
-Then each 10 seconds the REST API is inquired, the data printed and written to the logfile.
+Then each 10 seconds the REST API is inquired, the data shown on screen and written to the logfile.
 
 **Time** is localtime
 
-**Total** the current difference of balance and starting value
+**Total** the current difference of balance and starting value in milliDuco
 
 **Hash** is the sum of all hashrates of the miners
 
 **Mnr** is the number of miners currently running
 
-**10 sec**  is the balance difference obtained in the last 10 seconds
+**10 sec**  is the balance difference  in milliDuco of the last 10 seconds, this amount was actually earned.
 
-**Minute** is the floating avarage of the last 6 values
+**Minute** is the sum of the last 6 10sec values, this amount was actually earned in the last minute
 
-**Duco/d** then shows this as  actual Ducos/day
+**Duco/d** then shows this as estimated Ducos/day 
 
-It creates a logfile in the directory logs, name contains the username, the day of month and the hour it was started. If running several times an hour the information is appended in the log.
+The moving avarage for the first minute is increasing as it has to sample the values for a minute first, so ignore these. Afterwards it's always changing because the 10sec varies. This depends amongst other things on server load, connection quality and the results calculated. Each miner is not busy all the time, it has to wait for a job from the server and it takes time to send the result.
+
+It creates a logfile in the directory logs, name contains the username, the day of month and the hour it was started. If running several times an hour the information is appended in the log. The logfile shows the actual balance with 6 decimals in column Total. 
 These commands are available
 
+    a  get AVR Top e.g 20a
     b  Balance
     q  Query
+    
     o  show Other users
     u  switchUser, e.g. 3u
+    s  Show Topusers
+    t  switchTopuser (after getAVR!), e.g. 1t
+    
     f  Fast mode:    tick 2 seconds
     n  Normal mode: tick 10 seconds
     x  eXit
 
-o shows the users as provided in privusers.py, swith to this user by entering a number then u, e.g 
+**a** gets all currently running miners and counts the miners having 'AVR' in the field software. These are added up per user and shown if the count is >= the number given. `20a` shows all users with currently at least  20 AVR miners running.
+
+**s** shows the AVR users found:
+
+    Top friends of AVR mining:  
+    0  oke96
+    1  UNO1
+    ...
+
+**t** selects the topuser with the number given, e.g. `1t` here selects  UNO1
+
+**o** shows he users provided in privusers.py 
+
+**u** selects the user with the number given, e.g `5u` selects the user with number 5 
+
+**b** shows the actual balance of the current user 
+
+**q** query the balance growth of current user
+
+**f** switch to fast mode, query every 2 secods. In fast mode the values for 10sec, Minute and Ducos/day are for 2 seconds and 12 seconds and not really helpful. Anyway the balance is updated by the server only every about 6 seconds, so the fast mode is for debugging only. 
+
+**n** switch to normal mode, query every 10 secods.
+
+**x** eXit program
+
+
 ## jmin
 Invoke jmin.py, optionally a username can be provided as parameter.
 After the first few lines are shown, press any key:
@@ -127,9 +159,12 @@ After the first few lines are shown, press any key:
     targon M>
 At 21:09 12 miners were running . These values are shown for each miner:
 
-The **ID** of the rig with 7 chars and the **software** with 25 chars
+The **ID** of the rig with 7 chars and the **software** with 25 chars. To see longer text,  modify the numbers in these lines
 
-**Diff** the difficulty assigned
+      txid=' {:7}'.format(k['identifier'][:7])
+      txso='{:25}'.format(k['software'][:25])
+
+**Diff** the difficulty assigned by the server.  For AVR there should not be higher values than 6 because jobs with estimated hashrate >200 are completely rejected by the server.
 
 **Acc/Rej** number of accepted and rejected jobs
 
@@ -137,7 +172,7 @@ The **ID** of the rig with 7 chars and the **software** with 25 chars
 
 **Time** the time between the server sending the job and getting the result
 
-Then the **Total** of all hashrates and the total of **Arduino** hashrates (below 200) is shown.
+Then the **Total** of all hashrates and the total of **Arduino** hashrates (below 250) is shown.
 
 The values are only updated by the server in intervals of 5 , i.e. the values only change after 5 jobs are completed for a miner.
 
@@ -168,8 +203,8 @@ A Job is processed in these steps:
  - Send result to the server 
  - Wait for verdict
 
-These are the states used , slave states are Idle, Busy and Complete:
-|Sta|Meaning|Slave|nxt |Comment                           |
+These are the states used, slave states are Idle, Busy and Complete:
+|Sta|Meaning|Slave|Nxt |Comment                           |
 |---|---------------------|-----|----|----------------------------------|
 |D  |disconnected         |?    |-> C|try to connect to server          |
 |C  |connected            |I    |-> R|reset  slave, send request        |
@@ -179,7 +214,7 @@ These are the states used , slave states are Idle, Busy and Complete:
 |K  |transferred to slave |C    |-> W|and reset slave|
 |W  |wait for send        |I    |-> E|speed limit for fast slave, then send result|
 |E  |result sent          |I    |-> F|poll    |
-|F  |result response Error|I    |->D |This should not occur  |
+|F  |result response Error|I    |->D |This should not occur, restart connection  |
 |G  |result response Good |I    |->C |                                  |
 
 Three timestamps are recorded:
@@ -187,9 +222,9 @@ Three timestamps are recorded:
  - jobStart	when sending request, when setting state to R.
  -  getJobWait  difference to start i.e.  from R to setting to J.
  -  getResWait  difference from E to setting to C,  this is the ping time shown in the AVR_Miner.py 
- -  overall time is the difference of result received and jobStart.
+ -  overall time is the difference of result response received and jobStart.
  -   processing time to communicate with the slave (<40ms) and task switches. This is the difference of the sum and the overall time
- The Wait for send is required for 16 MHz lgt8fx with hashrate 230, as the server rejects any transaction with a hashrate > 200 as calculated by the server, see below.
+ The Wait for send is required for 16 MHz lgt8fx with hashrate 230, as the server rejects any transaction with a hashrate > 200 as calculated by the server. This includes the time it took for sending, so it's possible to cheat here by including the send time in the calculation of the wait time. But this is not known and varies.  As the punishment by the server is cruel - observed it does not only disconnect the too fast slave but also all connections with the same IP or user? -  these few ms are not worth the risk.
 
 This is shown in the output:
 
@@ -224,7 +259,7 @@ These are avarages for 4 rigs with 3 Arduinos and one ESP each, just one randoml
 	 
 The overall time is not recorded, so assume 70 ms processing time.
 Here we have about 64% (1550/2398) calculation time which is much better for my wallet.
-Targ Busy 111 means in slave state B the master queried average 111 times per job if the slave has finished calculation.  This means an average loop time of roughly estimated 14 ms (1550/111) for handling the three slaves.
+Targ Busy 111 means in slave state B the master queried average 111 times per job if the slave has finished calculation.  This means an average loop time of roughly estimated 14 ms (1550/111) for handling the three slaves. The number of queries should be reduced as - like in real life- it disturbs the slave, assume a query costs the slave about 5 usec, so it could be 5 ms faster?
 
 There are two hashrates, one is the locally obtained, this is always about 190-195 for 16 MHz Mini Pro, depending on the result. It is measured by the Mini Pro, so a frequency deviation like 15.9 MHz  would not change the reported hashrate but the real hashrate would be smaller. 
 If the hashrate is not sent, the server calculates it from the time difference between sending the job and receiving the result.  This is much lower, as it includes the time to send the result:
@@ -258,7 +293,9 @@ https://docs.micropython.org/en/latest/reference/speed_python.html#speed-python
  - periodically issuing `gc.collect()`
  - @micropython.native
  - @micropython.viper: def foo(self, arg: int) -> int:
+ - embedded C code
  
+
 
 
 

@@ -55,13 +55,14 @@ class ccon():
         self.start=0
         
         self.poller=uselect.poll()
-        self.sendRate=False    # False: let server calculate 
+        self.sendRate=False     # False: let server calculate 
         self.verbose=False      # False: less prints
-        self.ducoId="DUCOIDFFDFFFDFFFFFFFFF" #later queried from slave
+        self.ducoId=""          # queried from slave
         self.statReset()
         
-    def statReset(self):
-        self.reqAnz=0
+    def statReset(self):        # for statistics
+        self.reqAnz=0           #number of reqs processed
+        self.reqAnzTop=0        #max for tests, 0=no limit
         self.getJobWait=0
         self.getResWait=0
         self.jobStart=0
@@ -113,7 +114,6 @@ class ccon():
         tim=time.ticks_diff(time.ticks_ms(),self.start)
         print (self.target,"PER getJob took",tim)
         self.getJobWait+=tim
-        self.reqAnz+=1
         job = job.split(",")  
         if len(job)>2:
             #print (job[0])
@@ -157,6 +157,7 @@ class ccon():
         now=time.ticks_ms()
         tim=time.ticks_diff(now,self.start)
         timtot=time.ticks_diff(now,self.jobStart)
+        self.reqAnz+=1
         self.getResWait+=tim
         print (self.target,"PER getRes took",tim)
         print (self.target,feedback.rstrip(),"took",timtot) 
@@ -188,6 +189,8 @@ class ccon():
         # to slave
         i2.target=self.target
         t=i2.queryId()
+        # bad performance if using same ducoid?
+        t=t[:6]+str(self.target-5)+str(self.target+5)+t[10:]
         return t    
         
     def getResult(self):
@@ -241,7 +244,11 @@ class ccon():
                   print (self.target,"GetRes failed")
                   return 'X'
             return t
-                
+         
+        # check top
+        if self.reqAnzTop>0:
+            if self.reqAnz>=self.reqAnzTop:
+                return 'Z'
         # slave related
         t=self.getSlStat()  # also switches i2.target
         if self.verbose: print ("*** ",self.target,"sla",t,"sta",self.sta)         

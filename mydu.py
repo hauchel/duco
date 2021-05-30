@@ -60,32 +60,41 @@ def overview():
     now=time.ticks_ms()
     for c in myCons:
         tim=time.ticks_diff(now,c.jobStart)    
-        print (c.target, c.getSlStat(),c.sta,"sin", tim)
+        print (c.target, c.getSlStat(),c.reqAnz,'/',c.reqAnzTop,"sin", tim)
 
 def info():
     gc.collect()
     print ("Available Slaves:", i2.con.scan())
-    print("Free",gc.mem_free())
-    #print("pool_address",serv.pool_address)
-    #print("pool_port",serv.pool_port)
-    print("rigname",rigname)
-    print(len(myCons)," Cons:")
+    print("Mem Alloc",gc.mem_alloc(),'Free',gc.mem_free())
+    print("Rigname",rigname, 'with',len(myCons),"Cons:")
     for c in myCons:
         c.coninfo()
 
-def loop():
+def loop(top=0):
     global myCons
     allbusy=0       #counter subsequent loops
+    zings=0         # jobs terminated
     ms='?'
     now=time.ticks_ms()
     for c in myCons:   # in case of break 
         c.jobStart=now
+        if top==0:          #run unlimite
+            c.reqAnzTop=0
+        else:               #run top jobs (pi)
+            c.reqAnz=0
+            c.reqAnzTop=top
     while True:
         allbusy=allbusy+1
+        zings=1
         for c in myCons:
             ms=c.mach()
             if ms != 'B':
                 allbusy=0
+            if ms != 'Z':
+                zings=0
+        if zings>0:
+            print("Zinged")
+            break
         if kbhit() is not None:
             break
         if allbusy>0:
@@ -107,7 +116,7 @@ def menu():
         get_config()
         loop()
     while True:
-        if not inpAkt: print(rigname,">",end='',flush=True)
+        if not inpAkt: print(rigname,">",end='')
         ch = getch()  
         if ((ch >= '0') and (ch <= '9')):
             if (inpAkt) :
@@ -115,7 +124,7 @@ def menu():
             else:
                 inpAkt = True;
                 inp = ord(ch) - 48;
-            print(ch,end='',flush=True)
+            print(ch,end='')
         else:
             print(ch)
             inpAkt=False
@@ -126,15 +135,18 @@ def menu():
                 elif ch=="c":
                     myCons[inp].conn()
                 elif ch=="d":
+                    for c in myCons:
+                         c.close()
+                elif ch=="e":
                     myCons[inp].close()
-                    myCons.pop(inp)
+                    myCons.pop(inp)                         
                 elif ch=="h":
                     myCons[inp].sendRate = not myCons[inp].sendRate
                     print ("sendRate ",myCons[inp].sendRate)
                 elif ch=="i":
                     info()               
                 elif ch=="l":
-                    loop()  
+                    loop(0)  
                 elif ch=="m":
                     myCons[inp].mach()                     
                 elif ch=="o":
@@ -161,6 +173,13 @@ def menu():
                         c.close()
                     print ("Thanks for using mydu")
                     return
+                elif ch=="y":
+                    loop(inp)
+                elif ch=="z":
+                    for c in myCons:
+                        c.reqAnzTop=c.reqAnz+inp
+                    print ("Zinging")                
+                    loop()
                 else:
                     print("else"+str(ord(ch)))
             except Exception as inst:

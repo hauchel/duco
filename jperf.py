@@ -12,7 +12,8 @@
 
 
 username = "targon"
-miners={} # filled by getMiners 
+miners={}   # filled by getAllMiners 
+topsers=[]  # filled by topAVR
 tick=10
 
 try:
@@ -25,10 +26,54 @@ import time
 import sys
 import json
 import requests
+from operator import itemgetter
 
 from kbhit import KBHit
 kb = KBHit()
 connected=True
+
+def getAllMiners():    
+    global connected  #TODO error checking
+    global miners
+    print('Please Wait...')
+    try:
+        r=requests.get('https://server.duinocoin.com:5000/miners')
+    except Exception as inst:
+        print ("*** getMiners Exception "+str(inst))
+        connected=False
+        return 0
+    connected=True
+    jdic=json.loads(r.text)
+    miners=jdic['result']
+    return len(miners)
+
+
+def topAVR(min):
+    global miners 
+    global dn # sorted by count
+    global topsers;
+    print ("Miners has",len(miners))
+    dp=dict()
+    n=8000
+    for p in miners:
+        n-=1
+        if n<0:
+            break
+        if 'AVR' in p['software']:
+            try:
+                dp[p['username']]+=1
+            except:
+                dp[p['username']] =1
+    dn= sorted(dp.items(),key=itemgetter(1),reverse=True)  # list of user,count
+    print ("Count AVR Miners ge",min)
+    topsers=[]
+    for m in dn:    # user,count
+        if m[1]<min:
+            break
+        print(m[0],m[1])
+        topsers.append(m[0])
+    return len(topsers)
+   
 
 def getMiners():
     global miners
@@ -40,10 +85,10 @@ def getMiners():
                 miners=jdic['result']
                 return len(miners)
         else:
-            print('***getMiners for',username,'success not true')
+            print('*** getMiners for',username,'success not true')
             return 99
     except Exception as inst:
-        print ("***getMiners Exception "+str(inst))
+        print ("*** getMiners Exception "+str(inst))
         return 99
 
 def getHashTotal():
@@ -52,7 +97,6 @@ def getHashTotal():
     for m in miners:
         hash+=m['hashrate']
     return round(hash)
-
 
 def getBalance():    
     global connected  
@@ -73,7 +117,6 @@ def getBalance():
         print('***getBalance for',username,'success not true')
         return 0
 
- 
 def query(): 
     anf=0
     bal=0
@@ -139,36 +182,58 @@ def query():
             logf.close()
             return
 
-def switchuser(n):
+def switchUser(n):
     global username
     try:
         username=user.users[n]
         print ("username is ",username)
     except Exception as inst:
-        print ("switchuser exception "+str(inst))
+        print ("*** switchUser exception "+str(inst))
         print ("to use provide privusers.py with")
         print ("users=['user0','user1','user2']")
         
-def showusers():
+def showUsers():
     try:
-        print("friends and foes:")
+        print("Friends and Foes:")
         n=0
         for u in user.users:
             print ("{:2d} ".format(n),u)
             n+=1
     except Exception as inst:
-        print ("showusers exception "+str(inst))
+        print ("*** showUsers exception "+str(inst))
         print ("to use provide privusers.py with")
         print ("users=['user0','user1','user2']")
 
+def switchTopser(n):
+    global username
+    try:
+        username=topsers[n]
+        print ("username is ",username)
+    except Exception as inst:
+        print ("*** switchTopser exception "+str(inst))
+
+def showTopsers():
+    try:
+        print("Top friends of AVR mining:")
+        n=0
+        for u in topsers:
+            print ("{:2d} ".format(n),u)
+            n+=1
+    except Exception as inst:
+        print ("** swhowTopsers exception "+str(inst))
+
+
+
 def hilfe():
     print("              \n\
-a  Average  #TODO        \n\
+a  get AVR Top e.g 20a        \n\
 b  Balance               \n\
-q  query         \n\
+q  Query         \n\
  \n\
 o  show Other users     \n\
 u  switchUser, e.g. 3u     \n\
+s  Show topusers     \n\
+t  switchTopuser (after getAVR!), e.g. 1t \n\
  \n\
 f  Fast mode:    tick 2 seconds \n\
 n  Normal mode: tick 10 seconds  \n\
@@ -188,7 +253,7 @@ def menu():
         try:
             ch = kb.getch()  
         except Exception as inst:
-            print ("Don't use this key, Exception "+str(inst))
+            print ("*** Don't use this key, Exception "+str(inst))
             ch='?'
         if ((ch >= '0') and (ch <= '9')):
             if (inpAkt) :
@@ -202,9 +267,10 @@ def menu():
             inpAkt=False
             try:
                 if ch=="a":
-                    pass
+                    getAllMiners()
+                    topAVR(inp)
                 elif ch=="b":
-                    print("Balance ",getBalance())
+                    print("Balance of ",username,'is',getBalance())
                 elif ch=="f":
                     tick=2
                     query()
@@ -214,9 +280,14 @@ def menu():
                 elif ch=="q":
                     query()
                 elif ch=="o":
-                    showusers()                
+                    showUsers() 
+                elif ch=="s":
+                    showTopsers()                       
+                elif ch=="t":
+                    switchTopser(inp)
+                    query()                            
                 elif ch=="u":
-                    switchuser(inp)
+                    switchUser(inp)
                     query()              
                 elif ch=="x":
                     return
@@ -224,7 +295,7 @@ def menu():
                     print("else "+str(ord(ch)))
                     hilfe()
             except Exception as inst:
-                print ("menu Exception "+str(inst))
+                print ("*** menu Exception "+str(inst))
                 raise  #to ease fix
                 
 if len(sys.argv)>1:

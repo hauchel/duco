@@ -8,7 +8,7 @@ Technically it's possible to have more MiniPros, but the problem is the time it 
 Why MicroPython? Because Arduino on ESP is aPitA, it takes long to compile and to transfer and i wanted to learn something new. And it was really worth it. 
 
 # Hardware
-A **rig** consists of 3 MiniPro and one ESP, currently those rigs are used:
+A **rig** consists of 3 or MiniPro and one ESP, currently those rigs are used:
 
 ESP | IP| S | S | S        
 ---|---|---|---|---
@@ -18,6 +18,13 @@ ESP | IP| S | S | S
 |ESP-DF0369 |192.168.178.42|20|21|22
 
 In a **racket** rigs are one or more  rows  where RAW(!), GND, SCL and SDA are connected. Never needed any pullups because the MiniPro inputs use internal pullups. A row is 3d-printed (FreeCad RackGeh3 or RackGeh5), the vertical connectors are FreeCad Rack* in different length, screws are  SPAX yellow 2x10, ideally 4 per row.
+The power and I2C busses are 2 row matrix board, with 2-pin female headers from left solder side:
+These then fit the rows
+
+                12345678901234567890
+       Power        5       3
+       I2C           6       4
+
 ESP is in 3D-printed Housing (FreeCad esp12L), additionaly a matrix board 11 rows at (3*3+1) is used to accomodate the additional 2 pullups and the **levelshifter** for the I2C. One  serves two ESPs. Btw: (of course) a level shifter for SDA and SCL  is needed as the MiniPros run with 5 V  and the ESP only 3.3V. 
 
                 3.3 V side 

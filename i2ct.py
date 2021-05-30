@@ -81,7 +81,6 @@ class i2ct():
         self.send("I")
         time.sleep_ms(10)    #it takes time
         rec=self.request(22)[:22] # must be 22
-        print (rec)
         return rec.decode("utf-8")
 
     def setDifficulty(self):
