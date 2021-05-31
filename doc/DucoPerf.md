@@ -6,7 +6,7 @@ To improve the performance of my humble rigs i was interested in the actual incr
 
 The publicly available data from the  REST API (https://github.com/dansinclair25/duco-rest-api)  is collected and shown on the console by two python scripts.
  
-It turned out that these scripts are helpful to compare the performance of other users miners.
+It turned out that these scripts are helpful to compare the performance of other users miners. 
 
 ## Installation
 
@@ -22,22 +22,23 @@ But these files are needed only:
     jperf.py
     jmin.py
     kbhit.py
+    jrests.py
 
 
 In the directory where the .py are located make a directory named logs, here the results are stored
 
     pi@r1:~/wrk/perf $ ls
-    jmin.py  jperf.py  kbhit.py  
+    jmin.py  jperf.py  jrests.py kbhit.py  
     pi@r1:~/wrk/perf $ mkdir logs
 
 In the jperf.py and jlog.py modify the username to your needs. This is the default user inquired.
 
-    username = "targon"
-If you are frequently interested in certain users,   provide a  file with name privusers.py, having many users, e.g for 3 it looks like
+    uname = "targon"
+If you are frequently interested in certain users,  provide a  file with name privusers.py, having many users, e.g for 3 it looks like
 
-    user=['user0','user1','user2']
+    user=['targon','user1','user2']
 
-for usernames capitalization matters.
+For usernames capitalization matters. If the file does not exist, **o** only shows the default user, with `0u` it's always possible to switch to this user.
     
 
 ## jperf
@@ -87,7 +88,7 @@ Then each 10 seconds the REST API is inquired, the data shown on screen and writ
 The moving avarage for the first minute is increasing as it has to sample the values for a minute first, so ignore these. Afterwards it's always changing because the 10sec varies. This depends amongst other things on server load, connection quality and the results calculated. Each miner is not busy all the time, it has to wait for a job from the server and it takes time to send the result.
 
 It creates a logfile in the directory logs, name contains the username, the day of month and the hour it was started. If running several times an hour the information is appended in the log. The logfile shows the actual balance with 6 decimals in column Total. 
-These commands are available
+These commands are available, use **?** or **#** to show:
 
     a  get AVR Top e.g 20a
     b  Balance
@@ -102,20 +103,22 @@ These commands are available
     n  Normal mode: tick 10 seconds
     x  eXit
 
-**a** gets all currently running miners and counts the miners having 'AVR' in the field software. These are added up per user and shown if the count is >= the number given. `20a` shows all users with currently at least  20 AVR miners running.
+**a** gets all currently running miners and counts the miners having 'AVR' in the field software. These are added up per user and shown if the count is >= the number given. `20a` shows all users with currently at least  20 AVR miners running. As i always forget to enter the number and get all users, 10 is set as minimum.
+**A**  overwrites the lower limit of 10, `1A` gives all with at least 1
 
-**s** shows the AVR users found:
+**s** shows the AVR users found, only works after inquired by **a**:
 
     Top friends of AVR mining:  
     0  oke96
     1  UNO1
     ...
 
-**t** selects the topuser with the number given, e.g. `1t` here selects  UNO1
+**t** selects the topuser with the number given, e.g. `1t` here selects  UNO1.
+`*** switchTopser exception list index out of range` occurs if number given is higher than top users available. 
 
-**o** shows he users provided in privusers.py 
+**o** shows he users provided in `privusers.py` 
 
-**u** selects the user with the number given, e.g `5u` selects the user with number 5 
+**u** selects the user with the number given, e.g `5u` selects the user with number 5. Guess why `*** switchUser exception list index out of range` would be shown.
 
 **b** shows the actual balance of the current user 
 
@@ -127,6 +130,7 @@ These commands are available
 
 **x** eXit program
 
+**?** and **#**  show the available commands.
 
 ## jmin
 Invoke jmin.py, optionally a username can be provided as parameter.
@@ -174,24 +178,45 @@ The **ID** of the rig with 7 chars and the **software** with 25 chars. To see lo
 
 Then the **Total** of all hashrates and the total of **Arduino** hashrates (below 250) is shown.
 
-The values are only updated by the server in intervals of 5 , i.e. the values only change after 5 jobs are completed for a miner.
+The values are only updated by the server in intervals of 5 or 3 , i.e. the values only change after 5 or 3 jobs are completed for a miner.
 
-These commands are available:
+These commands are available, use **?** or **#** to show:
 
+    a  get AVR Top e.g 20a
     j  Json with tick n
     q  Query  tick 10
-    a  sort by accepted
+    
+    p  sort by accePted
     h  sort by hashrate
     n  no sort
-    s  sort by software
-    t  sort by time
+    w  sort by softWare
+    e  sort by Elapsedtime
     r  toggle reverse
+    
     o  show Other users
-    u  switch to User n then query fast
-    x  eXit
+    u  switchUser, e.g. 3u
+    s  Show topusers
+    t  switchTopuser (after getAVR), e.g. 1t
 
+For those  same as in jperf (a o u s t ? #) see description there.
 
+**q** query the miners for selected user every 10 seconds (tick 10)
 
+**j** query the miners for selected user with tick provided, `3j`queries every 3 seconds.  
+
+The sorting commands help to interpret the efficiency of miners shown, sorry for the hard to remember shortcuts. After selecting the sort,  **j** is executed with the last selected value.
+
+ **n**  No sorting, miners are shown in order of appearance
+ 
+ **p**  sort by number of accePted requests
+ 
+ **h**  sort by Hashrate
+ 
+**w**  sort by softWare this is the name of the miner
+
+**e**  sort by Elapsed time
+
+**r**  toggle Reverse , this determines whether the highest or the lowest values are shown first.
 
 # Performance of the Rigs
 
@@ -295,6 +320,11 @@ https://docs.micropython.org/en/latest/reference/speed_python.html#speed-python
  - @micropython.viper: def foo(self, arg: int) -> int:
  - embedded C code
  
+
+
+
+
+
 
 
 

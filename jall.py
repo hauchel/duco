@@ -36,7 +36,7 @@ def getBalances():
     outfile.close()  # required?
     return len(jdic)
 
-def getMiners():    
+def getAllMiners():    
     global connected  #TODO error checking
     global miners
     print('Please Wait...')

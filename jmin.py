@@ -16,35 +16,31 @@
 #
 # logs written to /logs 
 
-import time
-#from datetime import datetime
-import sys
-import json
-import requests
-from operator import itemgetter
-
-username='targon'
+uname = "targon"
+tick=10
 sortby='software'  # any key to sort by
 sortrev=False      # order
 
-try:
-    import privusers as user
-except ImportError:
-    print("no privusers.py, having")
-    print("user=['user0','user1','user2']")
 
+import time
+import sys
+from operator import itemgetter
 
 from kbhit import KBHit
 kb = KBHit()
 
-def getMiners():
-    try:
-        r=requests.get('https://server.duinocoin.com:5000/miners?username='+username)
-    except Exception as inst:
-        print ("getMiners Exception "+str(inst))
-        return {}
-    jdic=json.loads(r.text)
-    return jdic['result']    #  list of #miners dicts {}
+import jrests
+jr=jrests.rests(uname)
+
+try:
+    import privusers as priv
+    jr.users=priv.users
+except ImportError:
+    jr.users=[jr.username]    #0u is me  
+    print("no privusers.py, having")
+    print("user=['user0','user1','user2']")
+
+
 
 def sort(ldic):
     # global sortby has key interested in
@@ -73,7 +69,7 @@ def query(tick):
     print("Press any key to abort  <<<<")
     print("keyboard only checked every second")
     logN=time.strftime("_%d_%H.txt", time.localtime())
-    logN='logs/min_'+username+logN
+    logN='logs/min_'+jr.username+logN
     print("Logfile",logN)
     logf = open(logN, "a")
  
@@ -85,25 +81,25 @@ def query(tick):
         rest=tick - time.time() % tick   #time to sleep
         while rest>1:
             if kb.kbhit():
-                print ("Terminated")
                 logf.close()
+                kb.forgetch()
                 return
             time.sleep(1)
             rest=tick - time.time() % tick
         time.sleep(tick - time.time() % tick)    # wait exact
         txti=time.strftime("%H:%M:%S", time.localtime())
-        dic=getMiners()
-        tx=txti+" Running " +' {:2}'.format(len(dic))+"                Diff      Acc/Rej      Hash      Time"
+        jr.getMiners()
+        tx=txti+" Running " +' {:2}'.format(len(jr.uminers))+"                Diff      Acc/Rej      Hash      Time"
         print(tx)
         logf.write(tx+"\n")
         sumH=0
         sumArd=0
         if sortby=='':
-            li=unsort(dic)
+            li=unsort(jr.uminers)
         else:
-            li=sort(dic)
+            li=sort(jr.uminers)
         for n in li:
-            k=dic[n]
+            k=jr.uminers[n]
             txha='{:10.1f}'.format(k['hashrate'])
             sumH+=k['hashrate']
             if k['hashrate'] <250:      #Arduino only
@@ -122,57 +118,38 @@ def query(tick):
         logf.write(tx+"\n")
 
         if kb.kbhit():
-            print ("done")
             logf.close()
+            kb.forgetch()
             return
-
-def switchuser(n):
-    global username
-    try:
-        username=user.users[n]
-        print ("username is ",username)
-    except Exception as inst:
-        print ("switchuser exception "+str(inst))
-        print ("to use provide privusers.py with")
-        print ("users=['user0','user1','user2']")
-        
-def showusers():
-    try:
-        print("friends and foes:")
-        n=0
-        for u in user.users:
-            print ("{:2d} ".format(n),u)
-            n+=1
-    except Exception as inst:
-        print ("showusers exception "+str(inst))
-        print ("to use provide privusers.py with")
-        print ("users=['user0','user1','user2']")
         
 def hilfe():
     print("              \n\
+a  get AVR Top e.g 20a        \n\
 j  Json with tick n   \n\
 q  Query  tick 10        \n\
 \n\
-a  sort by accepted  \n\
-h  sort by hashrate  \n\
-n  no sort \n\
-s  sort by software  \n\
-t  sort by time  \n\
-r  toggle reverse \n\
+p  sort by accePted  \n\
+h  sort by Hashrate  \n\
+n  No sort \n\
+w  sort by softWare  \n\
+e  sort by Elapsed time  \n\
+r  toggle Reverse \n\
 \n\
-o  show Other users   \n\
-u  switch to User n then query fast      \n\
+o  show Other users     \n\
+u  switch User, e.g. 3u     \n\
+s  Show topusers     \n\
+t  switch Topuser (after get AVR), e.g. 1t \n\
+ \n\
 x  eXit          \n\
  \n")
         
 def afterSort(myTick):
     global sortby
     global sortrev    
-    print('Sort by',sortby)
+    print(' Sort by',sortby)
     query(myTick)
     
 def menu():   
-    global username
     global sortby
     global sortrev
     inpAkt=False
@@ -181,39 +158,53 @@ def menu():
     query(10)
     # here after keypress 
     while True:
-        if not inpAkt: print(username,"M>",end='',flush=True)
+        if not inpAkt: print(jr.username,"M>",end='',flush=True)
         try:
             ch = kb.getch()  
         except Exception as inst:
             print ("don't use this key, Exception "+str(inst))
             ch='?'
+        print(ch,end='',flush=True)
         if ((ch >= '0') and (ch <= '9')):
             if (inpAkt) :
                 inp = inp * 10 + (ord(ch) - 48);
             else:
                 inpAkt = True;
                 inp = ord(ch) - 48;
-            print(ch,end='',flush=True)
         else:
-            print(ch)
             inpAkt=False
             try:
-                if ch=="a":
-                    sortby='accepted'
-                    afterSort(myTick)
+                if ch==" ":
+                    pass
+                elif ch=="a":
+                    jr.getAllMiners()
+                    num=inp
+                    if num<10: 
+                        print ("assume minimum 10")
+                        num=10
+                    jr.topAVR(num)
+                elif ch=="A":     #override 10
+                    jr.topAVR(inp)
+                elif ch=="e":
+                    sortby='sharetime'
+                    afterSort(myTick)                    
                 elif ch=="h":
                     sortby='hashrate' 
                     afterSort(myTick)
                 elif ch=="j":
                     myTick=inp
-                    print("Tick ",myTick)
+                    if myTick<1: myTick=1
+                    print(" Tick ",myTick)
                     query(myTick)
                 elif ch=="n":
                     sortby=''
-                    print('No Sort')
-                    query(myTick)
+                    print(' No Sort')
+                    query(myTick) 
                 elif ch=="o":
-                    showusers()      
+                    jr.showUsers()                     
+                elif ch=="p":
+                    sortby='accepted'
+                    afterSort(myTick)                    
                 elif ch=="q":
                     query(10)
                 elif ch=="r":
@@ -221,27 +212,30 @@ def menu():
                     print('Sort reverse',sortrev)
                     query(myTick)
                 elif ch=="s":
-                    sortby='software'
-                    afterSort(myTick) 
+                    jr.showTopsers()                       
                 elif ch=="t":
-                    sortby='sharetime'
-                    afterSort(myTick)
+                    if jr.switchTopser(inp):
+                        query(myTick)                            
                 elif ch=="u":
-                    switchuser(inp)
-                    query(myTick)
-
+                    if jr.switchUser(inp):
+                        query(myTick)    
+                elif ch=="w":
+                    sortby='software'
+                    afterSort(myTick)                     
                 elif ch=="x":
-                    print("thanks for watching")
+                    print(" Thanks for watching")
                     return
-                else:
-                    print("else "+str(ord(ch)))
+                elif ch=="#" or ch=='?':
                     hilfe()
+                else:
+                    print(" ? (ascii "+str(ord(ch))+"), type ? for help")
             except Exception as inst:
-                print ("menu Exception "+str(inst))
+                print ("*** menu Exception "+str(inst))
                 #raise  #to ease fix
 
+                
 if len(sys.argv)>1:
-    username = sys.argv[1]
-print ("username is ",username)
+    jr.username = sys.argv[1]
+    print ("username is ",jr.username) 
 menu()        
 

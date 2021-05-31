@@ -36,7 +36,7 @@ class KBHit:
 
     def getch(self):
         if os.name == 'nt':
-            return msvcrt.getch().decode('utf-8')        
+            return msvcrt.getch().decode('ascii')        
         else:
             return sys.stdin.read(1)
                         
@@ -49,4 +49,8 @@ class KBHit:
             dr,dw,de = select([sys.stdin], [], [], 0)
             return dr != []
 
-    
+    def forgetch(self):  #I HATE PYTHON
+        try:
+            self.getch()
+        except:
+            pass         

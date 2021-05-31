@@ -11,98 +11,34 @@
 # {"result":{"balance":187.32699041006376,"username":"targon"},"success":true}\n
 
 
-username = "targon"
-miners={}   # filled by getAllMiners 
-topsers=[]  # filled by topAVR
+uname = "targon"
 tick=10
-
-try:
-    import privusers as user
-except ImportError:
-    print("no privusers.py, having")
-    print("user=['user0','user1','user2']")
 
 import time
 import sys
 import json
 import requests
-from operator import itemgetter
 
 from kbhit import KBHit
 kb = KBHit()
-connected=True
 
-def getAllMiners():    
-    global connected  #TODO error checking
-    global miners
-    print('Please Wait...')
-    try:
-        r=requests.get('https://server.duinocoin.com:5000/miners')
-    except Exception as inst:
-        print ("*** getMiners Exception "+str(inst))
-        connected=False
-        return 0
-    connected=True
-    jdic=json.loads(r.text)
-    miners=jdic['result']
-    return len(miners)
+import jrests
+jr=jrests.rests(uname)
 
+try:
+    import privusers as priv
+    jr.users=priv.users
+except ImportError:
+    jr.users=[jr.username]    #0u is me  
+    print("no privusers.py, having")
+    print("user=['user0','user1','user2']")
 
-def topAVR(min):
-    global miners 
-    global dn # sorted by count
-    global topsers;
-    print ("Miners has",len(miners))
-    dp=dict()
-    n=8000
-    for p in miners:
-        n-=1
-        if n<0:
-            break
-        if 'AVR' in p['software']:
-            try:
-                dp[p['username']]+=1
-            except:
-                dp[p['username']] =1
-    dn= sorted(dp.items(),key=itemgetter(1),reverse=True)  # list of user,count
-    print ("Count AVR Miners ge",min)
-    topsers=[]
-    for m in dn:    # user,count
-        if m[1]<min:
-            break
-        print(m[0],m[1])
-        topsers.append(m[0])
-    return len(topsers)
-   
-
-def getMiners():
-    global miners
-    miners={}
-    try:
-        r=requests.get('https://server.duinocoin.com:5000/miners?username='+username)
-        jdic=json.loads(r.text)
-        if jdic['success']==True:
-                miners=jdic['result']
-                return len(miners)
-        else:
-            print('*** getMiners for',username,'success not true')
-            return 99
-    except Exception as inst:
-        print ("*** getMiners Exception "+str(inst))
-        return 99
-
-def getHashTotal():
-    global miners # must be filled by getMiners first
-    hash=0;
-    for m in miners:
-        hash+=m['hashrate']
-    return round(hash)
 
 def getBalance():    
     global connected  
     connected=False
     try:
-        r=requests.get('https://server.duinocoin.com:5000/balances/'+username)
+        r=requests.get('https://server.duinocoin.com:5000/balances/'+jr.username)
     except Exception as inst:
         print ("***getBalance Exception "+str(inst))
         return 0
@@ -114,7 +50,7 @@ def getBalance():
     else:
         print(jdic['success'])
         print (r.text)
-        print('***getBalance for',username,'success not true')
+        print('***getBalance for',jr.username,'success not true')
         return 0
 
 def query(): 
@@ -124,14 +60,14 @@ def query():
     print("One Moment...")
     anf=float(getBalance())
     if not connected:
-        print ('***No balance for',username)
+        print ('***No balance for',jr.username)
         return
     prev=anf
     ar=[0,0,0,0,0,0]
     su=0
     arP=0
     logN=time.strftime("_%d_%H.txt", time.localtime())
-    logN='logs/perf_'+username+logN
+    logN='logs/perf_'+jr.username+logN
     logf = open(logN, "a")
     print("Logfile",logN)
     tx="Starting "+time.strftime("%c", time.localtime())+" with "+str(anf )
@@ -143,8 +79,8 @@ def query():
         rest=tick - time.time() % tick   #time to sleep
         while rest>1:
             if kb.kbhit():
-                print ("Terminated")
                 logf.close()
+                kb.forgetch()
                 return
             time.sleep(1)
             rest-=1
@@ -152,8 +88,8 @@ def query():
         txti=time.strftime("%H:%M:%S", time.localtime())
         # REST api
         bal=float(getBalance())
-        txmi = "  {:2d}".format(getMiners())    
-        txha = " {:6d}".format(getHashTotal()) 
+        txmi = "  {:2d}".format(jr.getMiners())    
+        txha = " {:6d}".format(jr.getHashTotal()) 
         # prepare
         dif10=bal-prev
         tx10="{:10.3f}".format(dif10*1000)  # this 10 secs
@@ -178,51 +114,9 @@ def query():
             print ("query terminated")
             return
         if kb.kbhit():
-            print ("done")
             logf.close()
+            kb.forgetch()
             return
-
-def switchUser(n):
-    global username
-    try:
-        username=user.users[n]
-        print ("username is ",username)
-    except Exception as inst:
-        print ("*** switchUser exception "+str(inst))
-        print ("to use provide privusers.py with")
-        print ("users=['user0','user1','user2']")
-        
-def showUsers():
-    try:
-        print("Friends and Foes:")
-        n=0
-        for u in user.users:
-            print ("{:2d} ".format(n),u)
-            n+=1
-    except Exception as inst:
-        print ("*** showUsers exception "+str(inst))
-        print ("to use provide privusers.py with")
-        print ("users=['user0','user1','user2']")
-
-def switchTopser(n):
-    global username
-    try:
-        username=topsers[n]
-        print ("username is ",username)
-    except Exception as inst:
-        print ("*** switchTopser exception "+str(inst))
-
-def showTopsers():
-    try:
-        print("Top friends of AVR mining:")
-        n=0
-        for u in topsers:
-            print ("{:2d} ".format(n),u)
-            n+=1
-    except Exception as inst:
-        print ("** swhowTopsers exception "+str(inst))
-
-
 
 def hilfe():
     print("              \n\
@@ -242,35 +136,41 @@ x  eXit          \n\
    \n")
         
 def menu():   
-    global username
     global tick
     inpAkt=False
     inp=0
     query()
     # here after keypress 
     while True:
-        if not inpAkt: print(username,"P>",end='',flush=True)
+        if not inpAkt: print(jr.username,"P>",end='',flush=True)
         try:
             ch = kb.getch()  
         except Exception as inst:
             print ("*** Don't use this key, Exception "+str(inst))
             ch='?'
+        print(ch,end='',flush=True)            
         if ((ch >= '0') and (ch <= '9')):
             if (inpAkt) :
                 inp = inp * 10 + (ord(ch) - 48);
             else:
                 inpAkt = True;
                 inp = ord(ch) - 48;
-            print(ch,end='',flush=True)
         else:
-            print(ch)
             inpAkt=False
             try:
-                if ch=="a":
-                    getAllMiners()
-                    topAVR(inp)
+                if ch==" ":
+                    pass
+                elif ch=="a":
+                    jr.getAllMiners()
+                    num=inp
+                    if num<10: 
+                        print ("assume minimum 10")
+                        num=10
+                    jr.topAVR(num)
+                elif ch=="A":     #override 10
+                    jr.topAVR(inp)   
                 elif ch=="b":
-                    print("Balance of ",username,'is',getBalance())
+                    print(" Balance of ",jr.username,'is',getBalance())
                 elif ch=="f":
                     tick=2
                     query()
@@ -280,26 +180,28 @@ def menu():
                 elif ch=="q":
                     query()
                 elif ch=="o":
-                    showUsers() 
+                    jr.showUsers() 
                 elif ch=="s":
-                    showTopsers()                       
+                    jr.showTopsers()                       
                 elif ch=="t":
-                    switchTopser(inp)
-                    query()                            
+                    if jr.switchTopser(inp):
+                        query()                            
                 elif ch=="u":
-                    switchUser(inp)
-                    query()              
+                    if jr.switchUser(inp): 
+                        query()              
                 elif ch=="x":
+                    print(" Thanks for watching")
                     return
-                else:
-                    print("else "+str(ord(ch)))
+                elif ch=="#" or ch=='?':
                     hilfe()
+                else:
+                    print(" ? (ascii "+str(ord(ch))+"), type ? for help")
             except Exception as inst:
                 print ("*** menu Exception "+str(inst))
                 raise  #to ease fix
                 
 if len(sys.argv)>1:
-    username = sys.argv[1]
-print ("username is ",username)                
+    jr.username = sys.argv[1]
+    print ("username is ",jr.username)                
 menu()        
 
