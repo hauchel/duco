@@ -20,7 +20,7 @@ uname = "targon"
 tick=10
 sortby='software'  # any key to sort by
 sortrev=False      # order
-
+wide=False        # display of software and rig
 
 import time
 import sys
@@ -104,8 +104,12 @@ def query(tick):
             sumH+=k['hashrate']
             if k['hashrate'] <250:      #Arduino only
                 sumArd+=k['hashrate']
-            txid=' {:7}'.format(k['identifier'][:7])
-            txso='{:25}'.format(k['software'][:25])
+            if wide:
+                txid=' {:25}'.format(k['identifier'][:25])
+                txso='{:35}'.format(k['software'][:35])
+            else:
+                txid=' {:7}'.format(k['identifier'][:7])
+                txso='{:25}'.format(k['software'][:25])
             txsh='{:10.3f}'.format(k['sharetime'])
             txac= ' {:6d} '.format(k['accepted'])
             txdi= ' {:6d} '.format(k['diff'])
@@ -127,6 +131,7 @@ def hilfe():
 a  get AVR Top e.g 20a        \n\
 j  Json with tick n   \n\
 q  Query  tick 10        \n\
+d  toggle display to show full names \n\
 \n\
 p  sort by accePted  \n\
 h  sort by Hashrate  \n\
@@ -152,6 +157,7 @@ def afterSort(myTick):
 def menu():   
     global sortby
     global sortrev
+    global wide
     inpAkt=False
     myTick=5    #change by j
     inp=0
@@ -185,6 +191,10 @@ def menu():
                     jr.topAVR(num)
                 elif ch=="A":     #override 10
                     jr.topAVR(inp)
+                elif ch=="d":     
+                    wide = not wide
+                    print(" display wide",wide)
+                    query(myTick)  
                 elif ch=="e":
                     sortby='sharetime'
                     afterSort(myTick)                    

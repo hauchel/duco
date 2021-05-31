@@ -57,7 +57,9 @@ def query():
     anf=0
     bal=0
     prev=0
-    print("One Moment...")
+    thistime=time.time()
+    lasttime=thistime
+    print(" Please wait, tick is",tick)  # 10 normal, else fast
     anf=float(getBalance())
     if not connected:
         print ('***No balance for',jr.username)
@@ -67,14 +69,20 @@ def query():
     su=0
     arP=0
     logN=time.strftime("_%d_%H.txt", time.localtime())
-    logN='logs/perf_'+jr.username+logN
+    if tick==10:  #just in case 2 sessions inquire same user
+        logN='logs/perf_'+jr.username+logN
+    else:
+        logN='logs/fast_'+jr.username+logN
     logf = open(logN, "a")
     print("Logfile",logN)
     tx="Starting "+time.strftime("%c", time.localtime())+" with "+str(anf )
     logf.write(tx+"\n")
     print(tx)
     print("values below in milliDuco, allow 1 minute settling time")
-    print( "Time          Total   Hash Mnr    10 sec    Minute    Duco/d")  
+    if tick==10:
+        print( "Time          Total   Hash Mnr    10 sec    Minute    Duco/d") 
+    else:
+        print( "Time          Total   Hash Mnr  timedelt  increase") 
     while True:
         rest=tick - time.time() % tick   #time to sleep
         while rest>1:
@@ -85,29 +93,44 @@ def query():
             time.sleep(1)
             rest-=1
         time.sleep(tick - time.time() % tick)    # wait exact
+        thistime=time.time()
         txti=time.strftime("%H:%M:%S", time.localtime())
         # REST api
         bal=float(getBalance())
-        txmi = "  {:2d}".format(jr.getMiners())    
-        txha = " {:6d}".format(jr.getHashTotal()) 
-        # prepare
-        dif10=bal-prev
-        tx10="{:10.3f}".format(dif10*1000)  # this 10 secs
-        dif99=bal-anf
-        tx99="{:10.3f}".format(dif99*1000)  # from start
-        su=su-ar[arP]+dif10                 # moving average / min
-        ar[arP]=dif10
-        arP+=1
-        if(arP>5):
-            arP=0
-        txsu="{:10.3f}".format(su*1000)     # per minute   
-        txpd="{:10.2f}".format(su*1440)     # per day
-        txab="{:15.6f}".format(bal)         # abs for logf
-        # write
-        tx=txti+" "+tx99+txha+txmi+tx10+txsu+txpd
-        print (tx)
-        tx=txti+" "+txab+txha+txmi+tx10+txsu+txpd
-        logf.write(tx+"\n")
+        show=2
+        if tick != 10:
+            if bal==prev:
+                show=0
+            else:
+                show=1
+        if show>0:
+            txmi = "  {:2d}".format(jr.getMiners())    
+            txha = " {:6d}".format(jr.getHashTotal()) 
+            # prepare
+            dif10=bal-prev
+            tx10="{:10.3f}".format(dif10*1000)  # this 10 secs
+            dif99=bal-anf
+            tx99="{:10.3f}".format(dif99*1000)  # from start
+            su=su-ar[arP]+dif10                 # moving average / min
+            ar[arP]=dif10
+            arP+=1
+            if(arP>5):
+                arP=0
+            txsu="{:10.3f}".format(su*1000)     # per minute   
+            txpd="{:10.2f}".format(su*1440)     # per day
+            txab="{:15.6f}".format(bal)         # abs for logf
+            # write
+            if show==1:   #fast
+                txtd="  ({:6.3f})".format(thistime-lasttime)
+                txs=txti+" "+tx99+txha+txmi+txtd+tx10
+                txl=txti+" "+txab+txha+txmi+txtd+tx10
+                lasttime=thistime
+            else:
+                txs=txti+" "+tx99+txha+txmi+tx10+txsu+txpd
+                txl=txti+" "+txab+txha+txmi+tx10+txsu+txpd
+            print (txs)
+            logf.write(txl+"\n")
+            
         prev=bal
         if not connected:   #something went wrong
             logf.close()
@@ -129,7 +152,7 @@ u  switchUser, e.g. 3u     \n\
 s  Show topusers     \n\
 t  switchTopuser (after getAVR!), e.g. 1t \n\
  \n\
-f  Fast mode:    tick 2 seconds \n\
+f  Fast mode:   tick  1 second, only changes shown \n\
 n  Normal mode: tick 10 seconds  \n\
  \n\
 x  eXit          \n\
@@ -172,7 +195,7 @@ def menu():
                 elif ch=="b":
                     print(" Balance of ",jr.username,'is',getBalance())
                 elif ch=="f":
-                    tick=2
+                    tick=1
                     query()
                 elif ch=="n":
                     tick=10

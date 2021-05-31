@@ -21,9 +21,8 @@ But these files are needed only:
 
     jperf.py
     jmin.py
-    kbhit.py
     jrests.py
-
+    kbhit.py
 
 In the directory where the .py are located make a directory named logs, here the results are stored
 
@@ -71,19 +70,19 @@ When starting the script i owned 423.57... Ducos
 The values shown for some columns are  milliDuco i.e. 1/1000 of a Duco.
 Then each 10 seconds the REST API is inquired, the data shown on screen and written to the logfile.
 
-**Time** is localtime
+**Time** is localtime.
 
-**Total** the current difference of balance and starting value in milliDuco
+**Total** the current difference of balance and starting value in milliDuco.
 
-**Hash** is the sum of all hashrates of the miners
+**Hash** is the sum of all hashrates of the miners.
 
-**Mnr** is the number of miners currently running
+**Mnr** is the number of miners currently running.
 
 **10 sec**  is the balance difference  in milliDuco of the last 10 seconds, this amount was actually earned.
 
-**Minute** is the sum of the last 6 10sec values, this amount was actually earned in the last minute
+**Minute** is the sum of the last 6 10sec values, this amount was actually earned in the last minute.
 
-**Duco/d** then shows this as estimated Ducos/day 
+**Duco/d** then shows this as estimated Ducos/day. 
 
 The moving avarage for the first minute is increasing as it has to sample the values for a minute first, so ignore these. Afterwards it's always changing because the 10sec varies. This depends amongst other things on server load, connection quality and the results calculated. Each miner is not busy all the time, it has to wait for a job from the server and it takes time to send the result.
 
@@ -104,7 +103,7 @@ These commands are available, use **?** or **#** to show:
     x  eXit
 
 **a** gets all currently running miners and counts the miners having 'AVR' in the field software. These are added up per user and shown if the count is >= the number given. `20a` shows all users with currently at least  20 AVR miners running. As i always forget to enter the number and get all users, 10 is set as minimum.
-**A**  overwrites the lower limit of 10, `1A` gives all with at least 1
+**A**  overwrites the lower limit of 10, `1A` gives all with at least 1.
 
 **s** shows the AVR users found, only works after inquired by **a**:
 
@@ -116,21 +115,32 @@ These commands are available, use **?** or **#** to show:
 **t** selects the topuser with the number given, e.g. `1t` here selects  UNO1.
 `*** switchTopser exception list index out of range` occurs if number given is higher than top users available. 
 
-**o** shows he users provided in `privusers.py` 
+**o** shows he users provided in `privusers.py` .
 
 **u** selects the user with the number given, e.g `5u` selects the user with number 5. Guess why `*** switchUser exception list index out of range` would be shown.
 
-**b** shows the actual balance of the current user 
+**b** shows the actual balance of the current user .
 
-**q** query the balance growth of current user
+**q** query the balance growth of current user.
 
-**f** switch to fast mode, query every 2 secods. In fast mode the values for 10sec, Minute and Ducos/day are for 2 seconds and 12 seconds and not really helpful. Anyway the balance is updated by the server only every about 6 seconds, so the fast mode is for debugging only. 
+**n** switch to normal mode, query every 10 seconds.
 
-**n** switch to normal mode, query every 10 secods.
-
-**x** eXit program
+**x** eXit program.
 
 **?** and **#**  show the available commands.
+
+**f** switch to fast mode. The balance is updated by the server only once in a certain time (here from 6 to 10 seconds). In fast mode it queries every second and only updates if the balance has changed. This helps to understand the current reward system. The display is different:
+
+    Time          Total   Hash Mnr  timedelt  increase
+    19:05:58    120.587   2044  16  ( 8.000)    10.019
+    19:06:08    130.663   2024  16  (10.005)    10.075
+    19:06:14    140.710   2024  16  ( 5.997)    10.048
+    19:06:22    149.693   2024  16  ( 7.998)     8.983
+
+**timedelt** shows the actual difference in ms of the queries, this varies, mainly depending on server load.
+
+**increase** shows the growth of the balance since last query. Currently it's limited to about 10, but this might change without notice.
+
 
 ## jmin
 Invoke jmin.py, optionally a username can be provided as parameter.
@@ -163,18 +173,15 @@ After the first few lines are shown, press any key:
     targon M>
 At 21:09 12 miners were running . These values are shown for each miner:
 
-The **ID** of the rig with 7 chars and the **software** with 25 chars. To see longer text,  modify the numbers in these lines
-
-      txid=' {:7}'.format(k['identifier'][:7])
-      txso='{:25}'.format(k['software'][:25])
+The **ID** of the rig with 7 chars and the **software** with 25 chars. To see longer text,  use the **d** command, see below.
 
 **Diff** the difficulty assigned by the server.  For AVR there should not be higher values than 6 because jobs with estimated hashrate >200 are completely rejected by the server.
 
-**Acc/Rej** number of accepted and rejected jobs
+**Acc/Rej** number of accepted and rejected jobs.
 
-**Hash** the hashrate. As i don't provide the hashrate to the server, the estimated rate is shown
+**Hash** the hashrate. As i don't provide the hashrate to the server, the estimated rate is shown.
 
-**Time** the time between the server sending the job and getting the result
+**Time** the time between the server sending the job and getting the result.
 
 Then the **Total** of all hashrates and the total of **Arduino** hashrates (below 250) is shown.
 
@@ -185,6 +192,7 @@ These commands are available, use **?** or **#** to show:
     a  get AVR Top e.g 20a
     j  Json with tick n
     q  Query  tick 10
+    d  toggle display to show full names
     
     p  sort by accePted
     h  sort by hashrate
@@ -204,17 +212,19 @@ For those  same as in jperf (a o u s t ? #) see description there.
 
 **j** query the miners for selected user with tick provided, `3j`queries every 3 seconds.  
 
+**d** toggle display so the full names for ID and software are shown.
+
 The sorting commands help to interpret the efficiency of miners shown, sorry for the hard to remember shortcuts. After selecting the sort,  **j** is executed with the last selected value.
 
- **n**  No sorting, miners are shown in order of appearance
+ **n**  No sorting, miners are shown in order of appearance.
  
- **p**  sort by number of accePted requests
+ **p**  sort by number of accePted requests.
  
- **h**  sort by Hashrate
+ **h**  sort by Hashrate.
  
-**w**  sort by softWare this is the name of the miner
+**w**  sort by softWare this is the name of the miner.
 
-**e**  sort by Elapsed time
+**e**  sort by Elapsed time.
 
 **r**  toggle Reverse , this determines whether the highest or the lowest values are shown first.
 
