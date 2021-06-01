@@ -189,14 +189,16 @@ def menu():
                     if num<10: 
                         print ("assume minimum 10")
                         num=10
-                    jr.topAVR(num)
+                    jr.topUsers(num,'AVR')
                 elif ch=="A":     #override 10
-                    jr.topAVR(inp)   
+                    jr.topUsers(inp,'AVR')   
                 elif ch=="b":
                     print(" Balance of ",jr.username,'is',getBalance())
                 elif ch=="f":
                     tick=1
                     query()
+                elif ch=="i":
+                    jr.topUsers(inp,'I2C')                     
                 elif ch=="n":
                     tick=10
                     query()                    

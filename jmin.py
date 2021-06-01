@@ -41,7 +41,6 @@ except ImportError:
     print("user=['user0','user1','user2']")
 
 
-
 def sort(ldic):
     # global sortby has key interested in
     # returns list of numbers pointing to entry in ldic
@@ -56,14 +55,13 @@ def sort(ldic):
     return li
 
 def unsort(ldic):
-    # keys interested in
+    # 1:1
     li=[]
     n=0
     for l in ldic:
         li.append(n)
         n+=1
-    return li
-    
+    return li    
     
 def query(tick):    
     print("Press any key to abort  <<<<")
@@ -159,7 +157,7 @@ def menu():
     global sortrev
     global wide
     inpAkt=False
-    myTick=5    #change by j
+    myTick=10    #change by j
     inp=0
     query(10)
     # here after keypress 
@@ -188,9 +186,9 @@ def menu():
                     if num<10: 
                         print ("assume minimum 10")
                         num=10
-                    jr.topAVR(num)
+                        jr.topUsers(num,'AVR')  
                 elif ch=="A":     #override 10
-                    jr.topAVR(inp)
+                    jr.topUsers(inp,'AVR')
                 elif ch=="d":     
                     wide = not wide
                     print(" display wide",wide)
@@ -201,6 +199,8 @@ def menu():
                 elif ch=="h":
                     sortby='hashrate' 
                     afterSort(myTick)
+                elif ch=="i":
+                    jr.topUsers(inp,'I2C')                           
                 elif ch=="j":
                     myTick=inp
                     if myTick<1: myTick=1

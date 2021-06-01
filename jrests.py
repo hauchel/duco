@@ -11,7 +11,7 @@ class rests:
         self.connected=True
         self.miners={}      # filled by getAllMiners 
         self.uminers={}     # filled by getMiners for user 
-        self.topsers=[]     # filled by topAVR
+        self.topsers=[]     # filled by topusers
         self.users=[]       # from privusers
         self.username=unam
     
@@ -28,7 +28,8 @@ class rests:
         self.miners=jdic['result']
         return len(self.miners)   
     
-    def topAVR(self,min):
+    def topUsers(self,min,txt):
+        # returns users with at least min miners having txt in software
         print (len(self.miners),"Miners active")
         dp=dict()
         n=8000
@@ -36,13 +37,13 @@ class rests:
             n-=1
             if n<0:
                 break
-            if 'AVR' in p['software']:
+            if txt in p['software']:
                 try:
                     dp[p['username']]+=1
                 except:
                     dp[p['username']] =1
         dn= sorted(dp.items(),key=itemgetter(1),reverse=True)  # list of user,count
-        print ('users with at least',min,'AVR Miners:')
+        print ('users with at least',min,txt,'Miners:')
         self.topsers=[]
         for m in dn:    # user,count
             if m[1]<min:
@@ -51,6 +52,7 @@ class rests:
             self.topsers.append(m[0])
         return len(self.topsers) 
     
+
     def getMiners(self):
         self.uminers={}
         try:
@@ -106,7 +108,7 @@ class rests:
     
     def showTopsers(self):
         try:
-            print(" Top friends of AVR mining:")
+            print(" Top friends of mining:")
             n=0
             for u in self.topsers:
                 print ("{:2d}t ".format(n),u)
