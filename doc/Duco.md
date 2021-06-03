@@ -10,12 +10,14 @@ Why MicroPython? Because Arduino on ESP is aPitA, it takes long to compile and t
 # Hardware
 A **rig** consists of 3 or MiniPro and one ESP, currently those rigs are used:
 
-ESP | IP| S | S | S        
----|---|---|---|---
-|ESP-DF5B35 |192.168.178.39|25|26|27
-|ESP-DF942E |192.168.178.40|11|12|13
-|ESP-DF9478 |192.168.178.41|15|16|17
-|ESP-DF0369 |192.168.178.42|20|21|22
+ESP | IP| S | S | S| S        
+---|---|---|---|---|---
+|ESP-DF5B35 |192.168.178.39|25|26|27|
+|ESP-DF942E |192.168.178.40|11|12|13|
+|ESP-DF9478 |192.168.178.41|15|16|17|
+|ESP-DF0369 |192.168.178.42|20|21|22|
+|lgt8a |192.168.178.|30|31|32|33|
+|lgt8b |192.168.178.|35|36|37|38|
 
 In a **racket** rigs are one or more  rows  where RAW(!), GND, SCL and SDA are connected. Never needed any pullups because the MiniPro inputs use internal pullups. A row is 3d-printed (FreeCad RackGeh3 or RackGeh5), the vertical connectors are FreeCad Rack* in different length, screws are  SPAX yellow 2x10, ideally 4 per row.
 The power and I2C busses are 2 row matrix board, with 2-pin female headers from left solder side:
@@ -25,7 +27,8 @@ These then fit the rows
        Power        5       3
        I2C           6       4
 
-ESP is in 3D-printed Housing (FreeCad esp12L), additionaly a matrix board 11 rows at (3*3+1) is used to accomodate the additional 2 pullups and the **levelshifter** for the I2C. One  serves two ESPs. Btw: (of course) a level shifter for SDA and SCL  is needed as the MiniPros run with 5 V  and the ESP only 3.3V. 
+ESP is in 3D-printed Housing (FreeCad esp12L), additionaly a matrix board 11 rows at (3*3+1) is used to accomodate the additional 2 pullups and the **levelshifter** for the I2C.
+One  serves two ESPs. Btw: (of course) a level shifter for SDA and SCL  is needed as the MiniPros run with 5 V  and the ESP only 3.3V. 
 
                 3.3 V side 
     grn  blu  blk  red  grn  blu   
@@ -35,14 +38,14 @@ ESP is in 3D-printed Housing (FreeCad esp12L), additionaly a matrix board 11 row
        
 On Breakout board  ESP 12-F  used these wire  colors:
 
-        pink    RST					TXD		white to RX
+		pink    RST					TXD		white to RX
             	ADC					RXD		yello to TX
             	CH_PC			SCL	GPIO5 	blue
             	GPIO16			SDA	GPIO4	green 
             	GPIO14				GPIO0	grey
 		        GPIO12				GPIO2	pup VCC
 		    	GPIO13				GPIO15	pup GND
-    	red     VCC			        GND 	black
+		red     VCC			        GND 	black
 
 
 For RST and GPIO0 add a 10k Pullup to VCC and button to GND.
@@ -52,11 +55,20 @@ Fortunately this finger exercise is only required once in order to flash MicroPy
 
 For the **power supply** it is planned to to use 4x1.5V Ni-MH 2400 mAh  charged by the sun. The voltage varies up to 6 V, so the MiniPro RAW pin is used for VCC. 
 For the ESP a step-down converter 1 A  (+ fat elkos) reduces the voltage to 3.3V.  One  ESP can draw up to 400 mA while sending, but only for a very short time.
- For the +5V of the levelshifters (very few mA only) used a low-drop 5 V regulator, could also use VCC from any MicroPro. Instead of the accus use a power adapter + step-down 1A to 5.55 V  (+ fat elkos):
 
-    ACAdaper -- Stp-Dn 5.55 V  -- RAW MicroPro
-    				           -- Stp-Dn 3.33 V -- ESP
-    				           -- Low Drop 5V -- levelshifter
+ For the +5V of the levelshifters (very few mA only) used a low-drop 5 V regulator, could also use VCC from any MicroPro. 
+ 
+ If running ATtiny85, another, more powerful 5V is required for 16 MHz.
+
+All step downs are LM2596S which are cheap and really stable. They are contained in  FreeCad StepDown_B19 including a LED voltmeter and lots of Dupont Connectors.
+
+Instead of the accus use a power adapter + step-down 1A to about 5.55 V  (+ fat elkos).:
+
+    ACAdaper-- Stp-Dn 5.55 V  -- RAW MicroPro
+						      -- Low Drop 5V -- levelshifter
+			-- Stp-Dn 3.33 V -- ESP
+			-- Stp-Dn 5.00 V -- ATtiny
+
 
 # Master and Slave
 
@@ -100,7 +112,8 @@ SPI is very fast serial communication, but only 1:1. The slaves could be daisy-c
 
 ## I2C Communication
 
-I did not want to change the max size 32 of a I2C message as used in Arduinos wire library.  Hashes used have size 40.  It would be possible to compress them (they have only 4 bit 0..9a..f); but this is not really the Knackpunkt as communication is quite fast. And already software of this kind was available (cluster solving Sudoku or finding primes ). The ESP is master and sends a command to a slave. The slave then provides data if required in a returnBuffer. Before the master reads this data, it checks if the slave has completed operation by quering the status. Technically the  slave has two I2C functions called asynchronously whenever a masters request for this address is received:
+I did not want to change the max size 32 of a I2C message as used in Arduinos wire library.  Hashes used have size 40.  It would be possible to compress them (they have only 4 bit 0..9a..f); but this is not really the Knackpunkt as communication is quite fast. So the job is transferred in  4 chunks (see L,M,N,O below). When getting it running for the ATtiny85, it turned out that the buffer has a lenght of 16 only. Here we use LMNOPQ, see document tiny85. The difficulty is not required for the slave.
+The ESP is master and sends a command to a slave. The slave then provides data if required in a returnBuffer. Before the master reads this data, it checks if the slave has completed operation by quering the status. Technically the  slave has two I2C functions called asynchronously whenever a masters request for this address is received:
 
  - [ ] Wire.onReceive(receiveEvent):	a command is received
  - [ ]  Wire.onRequest(requestEvent):  the master fetches data from the slave
@@ -109,18 +122,18 @@ I did not want to change the max size 32 of a I2C message as used in Arduinos wi
               
 |char|Meaning       |Example       |Action by Slave                    
 |---|---|---|---
-|A   |clear flags        |A                        |sets runS to I                     |
-|D   |set difficulty     |tbd                     -|                                   |
-|E   |* provide exec time|not in ver c             |sets *                             |
+|A   |clear flags        |A                        |set runS to I                     |
+|D   |set difficulty     |D06|    not used                                      |
+|E   |provide exec time|E            |set backbuf                             |
 |H   |hashme             |H                        |start hashing                      |
-|I   |provide ID         |I                        |                                   |
+|I   |provide ID         |I    |set backbuf                             |                                   |
 |L   |lastblockhash 0:20 |L4e329de23..             |store                              |
 |M   |lastblockhash 20:40|M4e329de23..             |store                              |
 |N   |newblockhash 0:20  |N4e329de23..             |store                              |
-|O   |newblockhash 0:40  |O4e329de23..             |store start hashig                 |
-|R   |*  provide Result  |not in ver c             |                                   |
-|S   |*  provide Status  |S                        |runS (runR slCmd)                  |
-|V   |set twi Adr        |V8                       |set new Addres and reboot          |
+|O   |newblockhash 0:40  |O4e329de23..             |store start hashing                 |
+|R   |*  provide Result  |R             |set backbuf                                   |
+|S   |*  provide Status  |S         |set backbuf runS runR slCmd                  |
+|V   |set twi Adr        |V42                      |set new Addres and reboot          |
 
 
 
@@ -206,7 +219,7 @@ One major challenge is that for compiling the python code there must be enough f
 ## boot
 
 ## i2ct
-i2ct provides routines for the basic functions which are called by mydu. additionally it's suited to debug the I2C behavior:
+i2ct provides routines for the basic functions which are called by mydu. additionally it's suited to debug the I2C behavior. As the menu fuctionality described below takes space, it might be commented out.
 
     >>> k=i2ct()
     >>> k.menu()
@@ -365,7 +378,7 @@ i statistic
 
 
 
-This is an example conversation, names have been changed (e.g. John could be I2C Device 27)
+This is an example conversation to learn mermaid, only readable if md-reader supports it, names have been changed (e.g. John could be I2C Device 27)
 ```mermaid
 sequenceDiagram
 Server --> mydu:  

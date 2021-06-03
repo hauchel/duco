@@ -132,7 +132,7 @@ def query():
             logf.write(txl+"\n")
             
         prev=bal
-        if not connected:   #something went wrong
+        if not connected:   #something went wrong, close log
             logf.close()
             print ("query terminated")
             return
@@ -160,12 +160,17 @@ x  eXit          \n\
         
 def menu():   
     global tick
+    global connected
     inpAkt=False
     inp=0
     query()
+    connected =True
     # here after keypress 
     while True:
         if not inpAkt: print(jr.username,"P>",end='',flush=True)
+        while  not connected:
+            print ("Retry")
+            query(5)
         try:
             ch = kb.getch()  
         except Exception as inst:

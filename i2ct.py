@@ -18,9 +18,13 @@ class i2ct():
         # debug only:
         self.inp=0
         self.inpAkt=False
-        self.lasthash="2cbac32719086e89b856e17bd2a34f21032a51d2" #debug only
+        self.lasthash="2cbac32719086e89b856e17bd2a34f21032a51d2"
         self.newhash ="0a536a14db3b230247d4d90c3b33abff25b64382"
         self.difficulty=10
+
+
+    def setSpeed(self,khz):
+        self.con.init(self.pinSCL,self.pinSDA, freq=khz*1000)
 
     def request(self, anz):
         try:
@@ -81,7 +85,10 @@ class i2ct():
         self.send("I")
         time.sleep_ms(10)    #it takes time
         rec=self.request(22)[:22] # must be 22
-        return rec.decode("utf-8")
+        try:
+            return rec.decode("utf-8")
+        except: #not supported by slave
+            return 'DUCOID8159497002237243'
 
     def setDifficulty(self):
         if self.difficulty>99: 
@@ -114,6 +121,7 @@ class i2ct():
         ##print ("Hashes sent ",time.ticks_diff(time.ticks_ms(),start))
         
     def info(self):
+        gc.collect()
         print(" Free",gc.mem_free())
         print("          0123456789012345678901234567890123456789")
         print("Last ",len(self.lasthash),">"+self.lasthash+"<")
@@ -139,7 +147,7 @@ class i2ct():
             print("I>",end="")
             tmp=self.getch()
             try:
-                if tmp=="d":
+                if tmp=="d":  #only from 0x08 to 0x77
                      print("scan:",self.con.scan())
                 elif tmp=="e":
                     print (self.queryElapsed())
@@ -152,14 +160,19 @@ class i2ct():
                     self.info()                
                 elif tmp=="q":
                     print (self.queryStatus())
-                elif tmp=="w":
-                    print (self.queryResult())  
                 elif tmp=="r":  #debug only, response could change if slave still working
                     print("Request ",self.target," ",self.inp)
                     print(self.request(self.inp))
+                elif tmp=="s":
+                    print ("speed",self.inp)  
+                    self.setSpeed(self.inp)
+ 
                 elif tmp=="t":
                     self.target=self.inp
                     print("Target ",self.target)
+                elif tmp=="w":
+                    print (self.queryResult())  
+            
                 elif tmp=="z":
                     print (self.queryId())
   

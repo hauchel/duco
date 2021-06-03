@@ -61,11 +61,13 @@ class ccon():
         self.statReset()
         
     def statReset(self):        # for statistics
-        self.reqAnz=0           #number of reqs processed
-        self.reqAnzTop=0        #max for tests, 0=no limit
-        self.getJobWait=0
-        self.getResWait=0
-        self.jobStart=0
+        self.reqAnz=0           # number of reqs processed
+        self.reqAnzTop=0        # max for tests, 0=no limit
+        self.getJobWait=0       # sum of waiting for job
+        self.getResWait=0       # sum of waiting for result
+        self.jobStartTim=0      # time of job Start
+        self.jobRecvTim=0       # time of receiving job
+        self.jobContTim=0       # time to continue job in state W
         self.tarBusy=0        
         self.tarEla=0
         self.tarSum=0
@@ -97,7 +99,7 @@ class ccon():
             self.sta='R'
             self.poller.register(self.soc,uselect.POLLIN)
             self.start=time.ticks_ms()
-            self.jobStart=self.start
+            self.jobStartTim=self.start
         except Exception as inst:
             print ("ReqJob Exc "+str(inst))
             self.sta='D'
@@ -111,7 +113,9 @@ class ccon():
             print ("getJob Exc "+str(inst))
             self.sta='D'
             return
-        tim=time.ticks_diff(time.ticks_ms(),self.start)
+        self.jobRecvTim=time.ticks_ms()
+        self.jobContTim=0
+        tim=time.ticks_diff(self.jobRecvTim,self.start)
         print (self.target,"PER getJob took",tim)
         self.getJobWait+=tim
         job = job.split(",")  
@@ -156,7 +160,7 @@ class ccon():
             return
         now=time.ticks_ms()
         tim=time.ticks_diff(now,self.start)
-        timtot=time.ticks_diff(now,self.jobStart)
+        timtot=time.ticks_diff(now,self.jobStartTim)
         self.reqAnz+=1
         self.getResWait+=tim
         print (self.target,"PER getRes took",tim)
@@ -211,9 +215,10 @@ class ccon():
         i2.target=self.target
         now=time.ticks_ms()
         t='Y' 
+        
         if self.sta=='R': # waiting for fetch job
             if  not self.poller.poll(0): #have to avoid beeing caught here
-                tim=time.ticks_diff(now,self.jobStart)
+                tim=time.ticks_diff(now,self.jobStartTim)
                 if tim>20000:
                     print (self.target,"R Time? ",tim)
                     self.poller.unregister(self.soc)
@@ -226,12 +231,20 @@ class ccon():
                   return 'X'
             self.transfer()
             return t
-        if self.sta=='W':      # no waits yet
-                self.sndRes()  # changes state to 'E'
-                return t
+        
+        if self.sta=='W':   # speed limiter
+            self.sndRes()   # changes state to 'E'
+            return t        # not needed
+            if self.jobContTime==0:
+                self.jobContTime=now+2000
+            else:
+                if now>self.jobContTime: 
+                    self.sndRes()  # changes state to 'E'
+            return t
+        
         if self.sta=='E':  # fetch response
             if  not self.poller.poll(0):
-                tim=time.ticks_diff(now,self.jobStart)
+                tim=time.ticks_diff(now,self.jobStartTim)
                 if tim>20000:
                     print (self.target,"E Time? ",tim)
                     self.poller.unregister(self.soc)

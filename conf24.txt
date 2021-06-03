@@ -1,1 +1,2 @@
-Rig 24
+Rig24
+20 I2C 20 AVRtiny85(DUCO-S1A) v0.01
