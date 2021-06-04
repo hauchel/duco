@@ -135,6 +135,8 @@ def menu():
                 elif ch=="c":
                     myCons[inp].conn()
                 elif ch=="d":
+                    myCons[inp].close()                    
+                elif ch=="D":
                     for c in myCons:
                          c.close()
                 elif ch=="e":

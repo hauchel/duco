@@ -19,7 +19,10 @@ ESP | IP| S | S | S| S
 |lgt8a |192.168.178.|30|31|32|33|
 |lgt8b |192.168.178.|35|36|37|38|
 
-In a **racket** rigs are one or more  rows  where RAW(!), GND, SCL and SDA are connected. Never needed any pullups because the MiniPro inputs use internal pullups. A row is 3d-printed (FreeCad RackGeh3 or RackGeh5), the vertical connectors are FreeCad Rack* in different length, screws are  SPAX yellow 2x10, ideally 4 per row.
+In a **racket** rigs are one or more  rows  where RAW(!), GND, SCL and SDA are connected. 
+Tis requires a certain kind of Minipro, the A4 and A5 connectors must be close to A3, some have it opposed to the 6-pin serial side. Btw there are also different serial connectors, sometimes they are inversed. Original has DTR (green) close to RAW, nowadays DTR is on the other side, close to TXD.  Never needed any pullups because the MiniPro inputs use internal pullups.
+
+ A row is 3d-printed (FreeCad RackGeh3 or RackGeh5), the vertical connectors are FreeCad Rack* in different length, screws are  SPAX yellow 2x10, ideally 4 per row.
 The power and I2C busses are 2 row matrix board, with 2-pin female headers from left solder side:
 These then fit the rows
 
@@ -130,7 +133,7 @@ The ESP is master and sends a command to a slave. The slave then provides data i
 |L   |lastblockhash 0:20 |L4e329de23..             |store                              |
 |M   |lastblockhash 20:40|M4e329de23..             |store                              |
 |N   |newblockhash 0:20  |N4e329de23..             |store                              |
-|O   |newblockhash 0:40  |O4e329de23..             |store start hashing                 |
+|O   |newblockhash 20:40  |O4e329de23..             |store start hashing                 |
 |R   |*  provide Result  |R             |set backbuf                                   |
 |S   |*  provide Status  |S         |set backbuf runS runR slCmd                  |
 |V   |set twi Adr        |V42                      |set new Addres and reboot          |
@@ -154,9 +157,10 @@ The communication with the server is reflected by status:
 |C  |connected            |I    | -> R|connect reset  slave
 |R  |request sent         |I    | -> J| poll                    
 |J  |job received         |I    | -> K|hash to slave       
-|K  |transf. to slave     |B    | K |Wait for slave C
-|K  |transf. to slave     |C    | -> W|and reset slave 
+|K  |transferred to slave     |B    | K |Wait for slave C
+|K  |transferred to slave     |C    | -> W|and reset slave 
 |W  |wait for send        |I    | -> E|to compensate fast slave
+|W  |wait for send        |I    | -> K|retry if result was 0??
 |E  |result sent          |I    | -> F|poll                    
 |F  |result response Error|I    | ->C|                 
 |G  |result response Good |I    | ->C    

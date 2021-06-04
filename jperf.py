@@ -170,7 +170,7 @@ def menu():
         if not inpAkt: print(jr.username,"P>",end='',flush=True)
         while  not connected:
             print ("Retry")
-            query(5)
+            query()
         try:
             ch = kb.getch()  
         except Exception as inst:

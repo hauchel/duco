@@ -4,7 +4,6 @@
 # k.menu()
 import machine
 from machine import I2C
-import sys
 import gc
 import time
 
@@ -31,14 +30,14 @@ class i2ct():
             rec=self.con.readfrom(self.target,anz)
             return rec
         except Exception as inst:
-            print ("i2c req Exc: "+str(inst))
+            print (self.target,"i2c req Exc: "+str(inst))
             return bytearray("X00")
     
     def send(self,txt):
         try:
             self.con.writeto(self.target,bytearray(txt) )
         except Exception as inst:
-            print ("i2c send Exc: "+str(inst))
+            print (self.target,"i2c send Exc: "+str(inst))
   
     def queryStatus(self):
         self.send("S")
@@ -46,7 +45,7 @@ class i2ct():
         try:
             return rec.decode("utf-8")
         except Exception as inst:
-            print ("i2c queryStatus Exc: "+str(inst))
+            print (self.target,"i2c queryStatus Exc: "+str(inst))
             return bytearray("X00")
     
     def check(self):
@@ -96,109 +95,54 @@ class i2ct():
         tx="D{:02d}".format(self.difficulty)
         self.send(tx)
 
+    def setTwiAdr(self,adr):
+        tx="V{:02d}".format(adr)
+        self.send(tx)
+
+
     def sendHash(self,was):
         #print("Sending hash "+was)
         self.check()
         if was=='L':
-            tx='L'+self.lasthash[0:20]
+            tx=was+self.lasthash[0:20]
         elif was=='M':    
-            tx='M'+self.lasthash[20:40]
+            tx=was+self.lasthash[20:40]
         elif was=='N':    
-            tx='N'+self.newhash[0:20]
+            tx=was+self.newhash[0:20]
         elif was=='O':    
-            tx='O'+self.newhash[20:40]
+            tx=was+self.newhash[20:40]
         else:
-            print ("Invalid")
+            print ("Invalid SendHash",was)
             return
         self.send(tx)
+        
+    def sendHash85(self,was):
+        #print("Sending hash "+was)
+        self.check()
+        if was=='L':
+            tx=was+self.lasthash[0:14]
+        elif was=='M':    
+            tx=was+self.lasthash[14:28]
+        elif was=='N':    
+            tx=was+self.lasthash[28:40]            
+        elif was=='O':    
+            tx=was+self.newhash[0:14]
+        elif was=='P':    
+            tx=was+self.newhash[14:28]
+        elif was=='Q':    
+            tx=was+self.newhash[28:40]
+        else:
+            print ("Invalid SendHash85",was)
+            return
+        self.send(tx)        
     
-    def send4Hash(self):
-        ##start=time.ticks_ms()
-        self.sendHash('L');
-        self.sendHash('M');
-        self.sendHash('N');
-        self.sendHash('O');
-        ##print ("Hashes sent ",time.ticks_diff(time.ticks_ms(),start))
+    def sendHashes(self):
+        #start=time.ticks_ms()
+        if self.target <50:
+            for was in ['L','M','N','O']:
+                self.sendHash(was);
+        else: #tiny
+            for was in ['L','M','N','O','P','Q']:
+                self.sendHash85(was);
+        #print ("Hashes sent ",time.ticks_diff(time.ticks_ms(),start))
         
-    def info(self):
-        gc.collect()
-        print(" Free",gc.mem_free())
-        print("          0123456789012345678901234567890123456789")
-        print("Last ",len(self.lasthash),">"+self.lasthash+"<")
-        print("New  ",len(self.newhash),">"+self.newhash+"<")
- 
-    def getch(self):
-        while True:
-            ch= sys.stdin.read(1)     
-            if ch is not None:
-                print (ch,end='')
-                if (ch>='0') and (ch<='9'):
-                    if (self.inpAkt):
-                        self.inp=self.inp*10+ord(ch)-ord('0')
-                    else:
-                        self.inpAkt=True
-                        self.inp=ord(ch)-ord('0')
-                else:
-                    self.inpAkt=False
-                    return ch
-                
-    def menu(self):   
-        while True:
-            print("I>",end="")
-            tmp=self.getch()
-            try:
-                if tmp=="d":  #only from 0x08 to 0x77
-                     print("scan:",self.con.scan())
-                elif tmp=="e":
-                    print (self.queryElapsed())
-                elif tmp=="f":
-                    self.difficulty=self.inp
-                    self.setDifficulty()
-                elif tmp=="h":
-                    self.send4Hash()                
-                elif tmp=="i":
-                    self.info()                
-                elif tmp=="q":
-                    print (self.queryStatus())
-                elif tmp=="r":  #debug only, response could change if slave still working
-                    print("Request ",self.target," ",self.inp)
-                    print(self.request(self.inp))
-                elif tmp=="s":
-                    print ("speed",self.inp)  
-                    self.setSpeed(self.inp)
- 
-                elif tmp=="t":
-                    self.target=self.inp
-                    print("Target ",self.target)
-                elif tmp=="w":
-                    print (self.queryResult())  
-            
-                elif tmp=="z":
-                    print (self.queryId())
-  
-                elif tmp=="A":
-                    print("Send A to ",self.target)
-                    self.send("A")
-                elif tmp=="H":
-                    print("Send H ",self.target)
-                    self.send("H")
-                elif tmp=="L":
-                    self.sendHash(tmp)
-                elif tmp=="M":
-                    self.sendHash(tmp)
-                elif tmp=="N":
-                    self.sendHash(tmp)
-                elif tmp=="O":
-                    self.sendHash(tmp)
-                elif tmp=="S":
-                    print("Send S to ",self.target)
-                    self.send("S")
-                elif tmp=="x":
-                    return
-                else:
-                    print("d, q,w,e,z  h,r, q,w t  x  A H L M N O S ")
-            except Exception as inst:
-                print ("menu1 Exception "+str(inst))
-        
-
-

@@ -68,7 +68,8 @@ class ccon():
         self.jobStartTim=0      # time of job Start
         self.jobRecvTim=0       # time of receiving job
         self.jobContTim=0       # time to continue job in state W
-        self.tarBusy=0        
+        self.tarBusy=0    
+        self.tarRetry=0 
         self.tarEla=0
         self.tarSum=0
         
@@ -93,7 +94,7 @@ class ccon():
         
     def reqJob(self,username = "targon"):
         tx="JOB," + username + ",AVR"
-        if self.verbose: print("ReqJob",tx)
+        if self.verbose: print(self.target,"ReqJob",tx)
         try:
             self.soc.send(bytes(tx, "utf8"))  # Send job request
             self.sta='R'
@@ -101,7 +102,7 @@ class ccon():
             self.start=time.ticks_ms()
             self.jobStartTim=self.start
         except Exception as inst:
-            print ("ReqJob Exc "+str(inst))
+            print (self.target,"ReqJob Exc "+str(inst))
             self.sta='D'
             
     def getJob(self):
@@ -126,8 +127,9 @@ class ccon():
             self.newhash=job[1]
             #print (job[2])
             self.difficulty=int(job[2])
+            if self.verbose: print(self.target,job[0],job[1],job[2])
         else:
-            print ("Joblen?",len(job)," ",str(job),"<")
+            print (self.target,"Joblen?",len(job)," ",str(job),"<")
             self.sta='D'    
             
     def sndRes(self):
@@ -137,6 +139,10 @@ class ccon():
             tx=tx+ str(rat)  
         tx=  tx+ ","+self.tarnam+"," + self.rignam
         tx=  tx+ "," + self.ducoId
+        if self.result==0:
+            print(self.target,tx)
+            self.sta='C'                
+            return
         if self.verbose: 
             print ("SndRes",self.sta,tx)
         try:
@@ -180,7 +186,7 @@ class ccon():
         i2.newhash=self.newhash
         i2.target=self.target
         i2.difficulty=self.difficulty
-        i2.send4Hash()  # to target
+        i2.sendHashes() 
         self.sta='K'
     
     def getSlStat(self):
@@ -233,9 +239,16 @@ class ccon():
             return t
         
         if self.sta=='W':   # speed limiter
+            if self.result==0:
+                print (self.target, "Retry???")
+                self.tarRetry+=1
+                self.transfer()  # changes state to 'K'
+                return t
+                
+                
             self.sndRes()   # changes state to 'E'
             return t        # not needed
-            if self.jobContTime==0:
+            if self.jobContTime==0: #TODO
                 self.jobContTime=now+2000
             else:
                 if now>self.jobContTime: 
@@ -245,7 +258,7 @@ class ccon():
         if self.sta=='E':  # fetch response
             if  not self.poller.poll(0):
                 tim=time.ticks_diff(now,self.jobStartTim)
-                if tim>20000:
+                if tim>30000:   # if job took so long, something is kaputt
                     print (self.target,"E Time? ",tim)
                     self.poller.unregister(self.soc)
                     self.sta='D'
@@ -264,7 +277,7 @@ class ccon():
                 return 'Z'
         # slave related
         t=self.getSlStat()  # also switches i2.target
-        if self.verbose: print ("*** ",self.target,"sla",t,"sta",self.sta)         
+        #if self.verbose: print ("*** ",self.target,"sla",t,"sta",self.sta)         
         if self.sta=='D':
             print (self.target,"Not Connected")
             self.conn()
@@ -295,8 +308,10 @@ class ccon():
                   print (self.target,"SndRes failed")
                   return 'X'
             return t
-
+        # typical slave status exception.
         print(self.target,"ERR Sta Komisch?",self.sta)
+        time.sleep(0.1)
+        self.tarRetry+=1
         return 'X'
     
     def setVerbose(self,x):
@@ -305,7 +320,7 @@ class ccon():
         
     def coninfo(self):
         print()
-        print ("Target",self.target," sta",self.sta)
+        print ("Target",self.target," sta",self.sta,"retry",self.tarRetry)
         print ("Name >"+self.tarnam+"< >"+self.ducoId+ "< sendrate"+str(self.sendRate))
         if self.reqAnz>0:
             print ("Requests ",self.reqAnz)
