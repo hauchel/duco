@@ -1,6 +1,7 @@
 ﻿This is work in progress.
 # Overview
-Instead of the huge power-consuming Arduino MiniPros, cute ATtiny85 are used for calculating the hashes. Challenge is the missing I2C hardware, the 8 kB flash and 512 B RAM. But this still is an Arduino.  It is run with 16 MHz internal PLL, so no additional components required. Hashrate is - like MiniPro - about 195 H/s. 
+Instead of the huge power-consuming Arduino MiniPros, cute ATtiny85 are used for calculating the hashes.
+Challenge is the missing I2C hardware, the 8 kB flash and 512 B RAM. But this still is an Arduino.  It is run with 16 MHz internal PLL, so no additional components required. Hashrate is - like MiniPro - about 195 H/s. 
 
 Due to the low RAM those limitations currently exist:
  - difficulty not sent, fixed to 10, makes no difference
@@ -10,13 +11,49 @@ The I2C address tells the other programs if it's a tiny, I2C <=49 are MiniPros, 
 
 The subsequent information is for mature readers only,  there is no support for this approach.
 
+# Software
 
-# SpenceKonde Core
+## SpenceKonde Core
 
 As core used https://github.com/SpenceKonde/ATTinyCore
 
 Using Board Manager install http://drazzy.com/package_drazzy.com_index.json
   **ATTinyCore V 1.5.2**
+
+## Installation ATtiny
+Install https://github.com/SpenceKonde/ATTinyCore
+
+**Board** Attiny25/45/85 no bootloader
+
+**Chip** ATtiny85
+
+Information below depends on the fuse settings, i use
+**Clock source** 16 MHz PLL
+
+
+All files and directory sha1 of duino85 from https://github.com/hauchel/yaum/duino85
+are required.
+
+Connect programmer
+
+For each tiny:
+
+run .bat to set fuses
+
+Compile and Flash duino85.ino
+
+The I2 Address is in EEPROM 0 , if not provided 50 is used. It must be between 50 and 99
+use **ti2ct**  to set it or avrdude Terminal  `write eeprom 0 52`
+
+## Installation ESP
+please refer to https://github.com/hauchel/duco
+I'm using this config file:
+
+    Rig 24
+    51 I2C 51 AVR tiny85 (DUCO-S1A) v0.01
+    53 I2C 53 AVR tiny85 (DUCO-S1A) v0.01
+    54 I2C 54 AVR tiny85 (DUCO-S1A) v0.01
+    55 I2C 55 AVR tiny85 (DUCO-S1A) v0.01
 
 
 ## I2C 
@@ -52,49 +89,48 @@ Still experimenting with different I2C pullups, currently 4K7 are used.
 
 ## Programmer
 
-To use an Arduino as In System Programmer (ISP),  while programming these connections should exist. The programmers SS controls the RST of its victim, all others are connected 1:1. 
-|char|Meaning       |Example       |Action by Slave                    
+To use an Arduino as In System Programmer (ISP),  while programming these connections should exist. 
+The programmers SS controls the RST of its victim, all others are connected 1:1. 
+||Programmer       |Programmed  ||                    
 |---|---|---|---
-|A   |clear flags        |A              |sets runS to I                     |
-  
-  Programmer			programmed
-    Mini-Pro			Mini Pro 
-    GND 	brn		brn 	GND
-				blue	RST
-    VCC 	red		red		VCC	
-    SCK 	orng		orng	SCK
-    MISO	yell		yell	MISO	
-    MOSI	grn		grn 	MOSI
-    SS  	blue
+|    GND |	brn|		brn| 	GND|
+|				|		|blue	|RST|
+ |   VCC 	|red	|	red	|	VCC|	
+|    SCK 	|orng|		orng|	SCK|
+ |   MISO	|yell	|	yell|	MISO	|
+  |  MOSI	|grn	|	grn |	MOSI|
+   | SS  	|blue|
 
 There is a standard ISP connector 2*3 which is also available on many others like Nano or Uno, top view:
+|   |  |  |
+|---|---|---|---			
+|red |	grn	|	brn|
+|	VCC|  	MOSI| 	GND|
+|	MISO|	SCK	|	RST
+|	yell	|blue|	?
 
-			red 	grn		brn
-			VCC  	MOSI 	GND
-			MISO	SCK		RST
-			yell	blue	?
+And last but not least i use my own connector very well fitted for ATtiny x5. This is also the connection on the bus. top view:
 
-And last but not least i use my own connector very well fitted for ATtiny x5, 
-top view:
-
-		RST		VCC		SCK		MISO	MOSI	GND
-				 8		 7		 6		 5
-				VCC		PB2		PB1		PB0		
-				RST		PB3		PB4		GND
-				 1		 2		 3		 4
+ |1 |2  |3| 4|5|6|  
+|---|---|---|---|---|---	
+|RST |VCC |	SCK|MISO|	MOSI|	GND|
+|(pin) |8|	 7|	 6|	 5|
+|	|VCC|PB2|PB1|PB0|		
+|	|RST|PB3|PB4|GND|
+|(pin)  | 1	| 2| 3|	 4|
 				 
-An Saleae LA is connected for debugging, trigger on SCL going low:
-
-				    SCL				SDA
-    RST		VCC		SCK		MISO	MOSI	GND
-				    CH2		CH4		CH6		GND
-         
 During operation those are used:
+
 PB3 is a LED vs GND (+R of course)
+
 PB4 is used for debug output (CH0)
+
 SDA is PB0 green
+
 SCL is pB2 blue
+
 As all MISOs are connected on the bus, it must not be used for output(!).
+An Saleae LA is connected for debugging, trigger on SCL going low.
 
 Instead of Arduino as programmer there are many others available. Helpful to have one (like the DIAMEX AVR) which can be switched to 3.3V so it can stay connected to the ESP.
 
@@ -113,7 +149,7 @@ This is not really handy, so  use a .bat like this:
     set conf=-CC:\Users\xyz\AppData\Local\Arduino15\packages\ATTinyCore\hardware\avr\1.5.2/avrdude.conf
     %dude% %conf% -v -pattiny85 -cstk500v2 -PCOM10 -t
     pause
-This opens avrdude in Terminal mode, possible commands see to avrdude.pdf, must important:
+This opens avrdude in Terminal mode, possible commands see to avrdude.pdf, most important:
 
      dump eeprom 0 3
      write eeprom 0 52
@@ -142,23 +178,8 @@ To additionally set clock frequency to 16 MHz (very, very  recommended) use `
 
 
 
-## Installation
-Install https://github.com/SpenceKonde/ATTinyCore
 
-**Board** Attiny25/45/85 no bootloader
-**Chip** ATtiny85
-Information below depends on the fuse settings, i use
-**Clock source** 16 MHz PLL
-:
 
-All files and directory sha1 of duino85 from https://github.com/hauchel/yaum
-are required.
-Connect programmer
-For each tiny:
-run .bat to set fuses
-Compile and Flash duino85.ino
-The I2 Address is in EEPROM 0 , if not provided 50 is used. It must be between 50 and 99
-use ti2ct to set it or avrdude Terminal  `write eeprom 0 52`
 
 ## I2C Interface 
 Commands
