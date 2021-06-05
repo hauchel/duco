@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
-# classes for duino
+# classes for duino, currently at the limit for getting compiled on ESP 12...
+# 
 
 import socket
 import time
 import uselect
-
-try:
-    import requests
-except ImportError:
-    print("use urequests")
-    import urequests as requests
+#import urequests as requests
 
 try:   
     from i2ct import i2ct
@@ -24,16 +20,16 @@ class cserv():
         self.pool_address="51.15.127.80"
         self.pool_port =2811
         return
-        soc = socket.socket()
-        soc.settimeout(10)
-        serverip = requests.get("https://raw.githubusercontent.com/revoxhere/duino-coin/gh-pages/serverip.txt")
-        content = serverip.text.split("\n") # Read content and split into lines
-        self.pool_address = content[0]  # Line 1 = pool address
-        self.pool_port = int(content[1])  # Line 2 = pool port
-        soc.connect((self.pool_address,self.pool_port))  # Connect to the server
-        server_version = soc.recv(3).decode()  # Get server version
-        print("Server is on version", server_version)
-        soc.close()
+#        soc = socket.socket()
+#        soc.settimeout(10)
+#        serverip = requests.get("https://raw.githubusercontent.com/revoxhere/duino-coin/gh-pages/serverip.txt")
+#        content = serverip.text.split("\n") # Read content and split into lines
+#        self.pool_address = content[0]  # Line 1 = pool address
+#        self.pool_port = int(content[1])  # Line 2 = pool port
+#        soc.connect((self.pool_address,self.pool_port))  # Connect to the server
+#        server_version = soc.recv(3).decode()  # Get server version
+#        print("Server is on version", server_version)
+#        soc.close()
     
 
 class ccon():
@@ -86,12 +82,17 @@ class ccon():
         try:
             self.soc.connect((self.pool_address,self.pool_port))  
             print ("Connected") #TODO remove
-            self.soc.recv(3) #skip version
-            self.sta='C'
-            print ("Connect took ",time.ticks_diff(time.ticks_ms(),self.start))
+            self.sta='V'
+            self.poller.register(self.soc,uselect.POLLIN)
         except Exception as inst:
             print ("Conn Exc TO",self.conTimOut,str(inst))
             self.sta='D'
+        
+    def conn2(self):                
+            self.soc.recv(3) #skip version
+            self.sta='C'
+            print ("Connect took ",time.ticks_diff(time.ticks_ms(),self.start))
+      
         
     def reqJob(self,username = "targon"):
         tx="JOB," + username + ",AVR"
@@ -223,7 +224,11 @@ class ccon():
         i2.target=self.target
         now=time.ticks_ms()
         t='Y' 
-        
+        if self.sta=='V': # waiting for connection
+            if  self.poller.poll(0):
+                self.conn2()
+                self.poller.unregister(self.soc)
+            return t
         if self.sta=='R': # waiting for fetch job
             if  not self.poller.poll(0): #have to avoid beeing caught here
                 tim=time.ticks_diff(now,self.jobStartTim)
@@ -339,6 +344,6 @@ class ccon():
                  print ("Ela ", self.tarEla, "Res",self.tarSum, "Avg ",tt)
             tt=round(self.tarBusy/self.reqAnz)
             print ("Targ Busy ",self.tarBusy," per ",tt)         
-        print ("Last",self.lasthash)
-        print ("New ",self.newhash)
-        print ("Diffi ",self.difficulty)
+#        print ("Last",self.lasthash)
+#        print ("New ",self.newhash)
+#        print ("Diffi ",self.difficulty)

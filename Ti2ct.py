@@ -1,7 +1,6 @@
 # to test i2ct 
-from machine import I2C
+#from machine import I2C
 import gc
-import time
 import sys
 
 try:
@@ -98,7 +97,7 @@ def menu():
                     print(ch, "to",i2.target)
                     i2.send(ch)
                 elif (ch>="L") and (ch<="Q"):
-                    if self.target >49:
+                    if i2.target >49:
                         i2.sendHash85(ch)
                     else:
                         i2.sendHash(ch)

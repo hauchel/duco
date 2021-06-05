@@ -20,7 +20,7 @@ ESP | IP| S | S | S| S
 |lgt8b |192.168.178.|35|36|37|38|
 
 In a **racket** rigs are one or more  rows  where RAW(!), GND, SCL and SDA are connected. 
-Tis requires a certain kind of Minipro, the A4 and A5 connectors must be close to A3, some have it opposed to the 6-pin serial side. Btw there are also different serial connectors, sometimes they are inversed. Original has DTR (green) close to RAW, nowadays DTR is on the other side, close to TXD.  Never needed any pullups because the MiniPro inputs use internal pullups.
+Tis requires a certain kind of Minipro, the A4 and A5 connectors must be close to A3, some have it opposed to the 6-pin serial side. Btw there are also different serial connectors, sometimes they are inversed. Original has DTR (green) close to RAW, nowadays DTR is on the other side, close to TXD.  Pullups e.g. 4k7 for I2C should be used, although it works without because the MiniPro inputs use internal pullups. For ATtiny pullups are required.
 
  A row is 3d-printed (FreeCad RackGeh3 or RackGeh5), the vertical connectors are FreeCad Rack* in different length, screws are  SPAX yellow 2x10, ideally 4 per row.
 The power and I2C busses are 2 row matrix board, with 2-pin female headers from left solder side:
@@ -154,6 +154,7 @@ The communication with the server is reflected by status:
 |Sta|Meaning  |Slave|Nxt |Comment
 |:---:|---|:---:|:---:|---
 |D  |disconnected         |?    | -> C|sets runS runR      
+|V  |waiting for ver      |I    | -> C|tbd poll to avoid long wait
 |C  |connected            |I    | -> R|connect reset  slave
 |R  |request sent         |I    | -> J| poll                    
 |J  |job received         |I    | -> K|hash to slave       
