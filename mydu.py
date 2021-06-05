@@ -60,7 +60,7 @@ def overview():
     now=time.ticks_ms()
     for c in myCons:
         tim=time.ticks_diff(now,c.jobStart)    
-        print (c.target, c.getSlStat(),c.reqAnz,'/',c.reqAnzTop,"sin", tim)
+        print (c.target, c.getSlStat(),c.sta,c.reqAnz,'/',c.reqAnzTop,"sin", tim)
 
 def info():
     gc.collect()
@@ -78,7 +78,7 @@ def loop(top=0):
     now=time.ticks_ms()
     for c in myCons:   # in case of break 
         c.jobStart=now
-        if top==0:          #run unlimite
+        if top==0:          #run unlimited
             c.reqAnzTop=0
         else:               #run top jobs (pi)
             c.reqAnz=0

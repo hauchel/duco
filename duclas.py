@@ -68,9 +68,10 @@ class ccon():
         self.jobStartTim=0      # time of job Start
         self.jobRecvTim=0       # time of receiving job
         self.jobContTim=0       # time to continue job in state W
-        self.tarBusy=0    
-        self.tarRetry=0 
-        self.tarEla=0
+        self.tarBusy=0          #
+        self.tarRetry=0         # sum of retries
+        self.tarFault=0         # current retries in state W
+        self.tarEla=0           # elapsed
         self.tarSum=0
         
     def conn(self):    
@@ -182,6 +183,7 @@ class ccon():
 
     def transfer(self):
         # to slave
+        i2.send("A")  # state 'C' would not change, so reset
         i2.lasthash=self.lasthash
         i2.newhash=self.newhash
         i2.target=self.target
@@ -240,11 +242,15 @@ class ccon():
         
         if self.sta=='W':   # speed limiter
             if self.result==0:
-                print (self.target, "Retry???")
+                print (self.target, "Retry",self.tarFault)
                 self.tarRetry+=1
-                self.transfer()  # changes state to 'K'
+                self.tarFault+=1
+                if self.tarFault<3:
+                    self.transfer()  # changes state to 'K'
+                else:
+                    self.sta='C'
                 return t
-                
+            self.tarFault=0   
                 
             self.sndRes()   # changes state to 'E'
             return t        # not needed

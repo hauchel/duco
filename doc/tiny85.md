@@ -1,13 +1,14 @@
 ﻿This is work in progress.
 # Overview
-Instead of the huge power-consuming Arduino MiniPros, cute ATtiny85 are used for calculating the hashes. Challenge is the missing I2C hardware, the 8 kB flash and 512 B RAM. But this still is an Arduino. The subsequent information is for mature readers only,  there is no support for this approach.
+Instead of the huge power-consuming Arduino MiniPros, cute ATtiny85 are used for calculating the hashes. Challenge is the missing I2C hardware, the 8 kB flash and 512 B RAM. But this still is an Arduino.  It is run with 16 MHz internal PLL, so no additional components required. Hashrate is - like MiniPro - about 195 H/s. 
 
 Due to the low RAM those limitations currently exist:
  - difficulty not sent, fixed to 10, makes no difference
  - ducoID not used, provided by master
 
 The I2C address tells the other programs if it's a tiny, I2C <=49 are MiniPros, 50+ attiny85.
-While MiniPro I2C is very stable, no issues within 24 hour operation, the ATtiny sometimes fail, currently no idea wether it's hardware, software or the moon.
+
+The subsequent information is for mature readers only,  there is no support for this approach.
 
 
 # SpenceKonde Core
@@ -35,18 +36,18 @@ Wire.h :
     #define BUFFER_LENGTH (WIRE_BUFFER_LENGTH)
 
 Changes here make things very difficult, so different commands for MiniPro and ATtiny85 are used. Also learned the hard way that here I2C contents must be read in receiveEvent else they are lost. 
-An example for errors, usually a retry helps
+While MiniPro I2C is very stable, no issues within 24 hour operation, the ATtiny sometimes fail, currently no idea wether it's hardware, software or the moon. An example for error on target 51, usually a retry helps
 
-    551 i2c req Exc: [Errno 19] ENODEV
-51 ERR Sta Komisch? K
-53 ela: 1413 res: 276 rat: 195
-51 ela: 1844 res: 356 rat: 193
-51 PER getRes took 2601
-51 GOOD took 4915
-51 PER getJob took 3405
-Hashes sent  44
-53 PER getRes took 44
-    All Bus  1
+    51 i2c req Exc: [Errno 19] ENODEV
+    51 ERR Sta Komisch? K			    <- query failed
+    53 ela: 1413 res: 276 rat: 195
+    51 ela: 1844 res: 356 rat: 193  	<- query ok
+    51 PER getRes took 2601
+    51 GOOD took 4915
+    51 PER getJob took 3405
+
+Still experimenting with different I2C pullups, currently 4K7 are used.
+    
     
 
 ## Programmer
