@@ -85,14 +85,17 @@ class ccon():
             self.sta='V'
             self.poller.register(self.soc,uselect.POLLIN)
         except Exception as inst:
-            print ("Conn Exc TO",self.conTimOut,str(inst))
+            print ("Conn Exc",inst)
             self.sta='D'
         
-    def conn2(self):                
+    def conn2(self):  
+        try:              
             self.soc.recv(3) #skip version
             self.sta='C'
             print ("Connect took ",time.ticks_diff(time.ticks_ms(),self.start))
-      
+        except Exception as inst:
+            print ("Conn2 Exc",inst)
+            self.sta='D'
         
     def reqJob(self,username = "targon"):
         tx="JOB," + username + ",AVR"

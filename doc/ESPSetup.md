@@ -3,18 +3,21 @@
 Most important  stable voltage supply 3.3 V
 
 On Breakout board  ESP 12-F i used these wire colors:
-
-			pink	RST					TXD		white to RX
-				ADC				RXD		yello to TX
-				CH_PC			SCL	GPIO5 	blue
-				GPIO16			SDA	GPIO4	green 
-				GPIO14				GPIO0	grey
-				GPIO12				GPIO2	pup VCC
-				GPIO13				GPIO15	pup GND
-			red	VCC				GND	black
+|Col|Pin  |  ..............|Pin |Col
+|:---:|---|:---:|:---:|---
+|pink	|RST|		   			|TXD|		white to RX |
+| |ADC|				|RXD|	yello to TX
+||CH_PC||GPIO5| 	SCL		blue
+||GPIO16||			GPIO4| SDA		green 
+||GPIO14||				GPIO0|	grey
+||GPIO12||				GPIO2|	pullup vs VCC
+||GPIO13||				GPIO15|	pullup vs GND
+|red|VCC| |				GND|	black
 
 
 For RST and GPIO0 add a 10k Pullup to VCC and button to GND.
+
+**Important:**  You need a serial connection to get it running. But this must only have 3.3 V on the TX line, which is the case for many, but not all USB to serial connectors.  In this case a level shifter or 2 resistors as voltage divider should be used for TX of serial to RX of ESP.
 
 **Reset:**  press pink .
 
@@ -37,7 +40,11 @@ Exit TeraTerm
 
 ## MicroPython Setup
 
-Install according to https://docs.micropython.org/en/latest/esp8266/tutorial/intro.html
+It's required to have python3 installed on the Windows machine.
+
+Clone the github repo https://github.com/hauchel/duco  to this machine.
+
+Install MicroPython according to https://docs.micropython.org/en/latest/esp8266/tutorial/intro.html
 
  - [ ] download bin
  - [ ] pip install esptool
@@ -69,7 +76,7 @@ Connect via Serial with 115200, then press Reset:
     >MicroPython v1.15 on 2021-04-18; ESP module with ESP8266
     Type "help()" for more information.
 
- - [ ] In boot.py modify WLAN credentials (for STA_IF),  
+ - [ ] In `boot.py` modify WLAN credentials (for STA_IF),  
  - [ ] upload  using  ampy on Com3 (exit TeraTerm before).
  - [ ]  If you are happy with the   WebREPL password 'p' also upload webrepl_cfg.py:
  
