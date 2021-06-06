@@ -1,6 +1,7 @@
 ﻿This is work in progress.
 # Overview
-Instead of the huge power-consuming Arduino MiniPros, cute ATtiny85 are used for calculating the hashes.
+Instead of the huge power-consuming Arduino MiniPros, cute ATtiny85 are used for calculating the hashes. They are connected via a I2C bus to an ESP8266 which provides the connection to the Server.
+
 Challenge is the missing I2C hardware, the 8 kB flash and 512 B RAM. But this still is an Arduino.  It is run with 16 MHz internal PLL, so no additional components required. Hashrate is - like MiniPro - about 195 H/s. 
 
 Due to the low RAM those limitations currently exist:
@@ -9,7 +10,7 @@ Due to the low RAM those limitations currently exist:
 
 The I2C address tells the other programs if it's a tiny, I2C <=49 are MiniPros, 50+ attiny85.
 
-The subsequent information is for mature readers only,  there is no support for this approach.
+The subsequent information is for mature readers only,  there is no support for this approach.  
 
 # Software
 
@@ -21,6 +22,8 @@ Using Board Manager install http://drazzy.com/package_drazzy.com_index.json
   **ATTinyCore V 1.5.2**
 
 ## Installation ATtiny
+This description applies to the standalone 8 pin ATtiny, there is no support for tinies with bootloader, e.g. the Digispark Mini USB.
+
 Install https://github.com/SpenceKonde/ATTinyCore
 
 **Board** Attiny25/45/85 no bootloader
@@ -103,11 +106,11 @@ The programmers SS controls the RST of its victim, all others are connected 1:1.
 
 There is a standard ISP connector 2*3 which is also available on many others like Nano or Uno, top view:
 |   |  |  |
-|---|---|---|---			
+|---|---|---|
 |red |	grn	|	brn|
 |	VCC|  	MOSI| 	GND|
-|	MISO|	SCK	|	RST
-|	yell	|blue|	?
+|	MISO|	SCK	|	RST|
+|	yell	|blue|	grey |
 
 And last but not least i use my own connector very well fitted for ATtiny x5. This is also the connection on the bus. top view:
 
@@ -197,8 +200,8 @@ Commands
 |P   |newblockhash 14:28  |P4e329de23..             |store  |
 |Q   |newblockhash 28:40  |Q4e329de23..             |store start hashing  |
 |R   |*  provide Result  |R            |                                   |
-|S   |*  provide Status  |S                        |runS (runR slCmd)    |
-|V   |set twi Adr        |V8                       |set new Addres and restart |
+|S   |*  provide Status  |S                 |runS (runR slCmd)    |
+|V   |set twi Adr        |V54                |set new Addres and restart |
 
 
 ## Sha1
@@ -232,7 +235,4 @@ Looks good:
     Global variables use 302 bytes (58%) of dynamic memory,
     leaving 210 bytes for local variables. Maximum is 512 bytes.
     
-
-
-
 

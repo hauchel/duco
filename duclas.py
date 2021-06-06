@@ -37,7 +37,6 @@ class ccon():
     def __init__(self,targ,tarnam,pool_address,pool_port,rignam):    
         print ("Init ",targ)
         self.target=targ
-        self.conTimOut=10
         self.tarnam=tarnam
         self.rignam=rignam
         self.pool_address=pool_address
@@ -67,6 +66,7 @@ class ccon():
         self.tarBusy=0          #
         self.tarRetry=0         # sum of retries
         self.tarFault=0         # current retries in state W
+        self.conFault=0         # current retries in state V
         self.tarEla=0           # elapsed
         self.tarSum=0
         
@@ -77,12 +77,13 @@ class ccon():
         self.ducoId=self.getDucoId()
         print (self.target,"Connecting...")
         self.soc = socket.socket()
-        self.soc.settimeout(self.conTimOut) # low timeout as this blocks, will try again next loop
+        self.soc.settimeout(10) # low timeout as this blocks, will try again next loop
         self.start=time.ticks_ms()
         try:
             self.soc.connect((self.pool_address,self.pool_port))  
-            print ("Connected") #TODO remove
+            print ("Connected") 
             self.sta='V'
+            self.conFault=0
             self.poller.register(self.soc,uselect.POLLIN)
         except Exception as inst:
             print ("Conn Exc",inst)
@@ -231,6 +232,11 @@ class ccon():
             if  self.poller.poll(0):
                 self.conn2()
                 self.poller.unregister(self.soc)
+            else:
+                self.conFault+=1
+                if  self.conFault > 6000:
+                      self.poller.unregister(self.soc)
+                      self.sta='D'                
             return t
         if self.sta=='R': # waiting for fetch job
             if  not self.poller.poll(0): #have to avoid beeing caught here
@@ -256,7 +262,7 @@ class ccon():
                 if self.tarFault<3:
                     self.transfer()  # changes state to 'K'
                 else:
-                    self.sta='C'
+                    self.sta='C'     # give up
                 return t
             self.tarFault=0   
                 
@@ -289,6 +295,7 @@ class ccon():
         if self.reqAnzTop>0:
             if self.reqAnz>=self.reqAnzTop:
                 return 'Z'
+            
         # slave related
         t=self.getSlStat()  # also switches i2.target
         #if self.verbose: print ("*** ",self.target,"sla",t,"sta",self.sta)         

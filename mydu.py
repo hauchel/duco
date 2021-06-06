@@ -157,9 +157,6 @@ def menu():
                     print (myCons[inp].getSlStat())
                 elif ch=="s":
                     get_config()
-                elif ch=="t":
-                    myCons[myc].conTimOut=inp
-                    print (myc,"Connection Timeout ",inp)
                 elif ch=="u":
                     myCons[inp].statReset() 
                     print ("stats reset for",inp)

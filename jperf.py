@@ -228,7 +228,7 @@ def menu():
                     print(" ? (ascii "+str(ord(ch))+"), type ? for help")
             except Exception as inst:
                 print ("*** menu Exception "+str(inst))
-                raise  #to ease fix
+                #raise  #to ease fix
                 
 if len(sys.argv)>1:
     jr.username = sys.argv[1]
