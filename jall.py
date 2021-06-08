@@ -92,15 +92,15 @@ def readMinfile():
         print ("miners has",len(miners))
  
 
-def readBalfiles():
+def readBalfiles(amnt):
+    # compares two balfiles and shows chng > amnt
     global dp # dict with balance[user]
     global da 
     global dc
-    np='json/bal__25_212530.txt'
-    na='json/bal__25_212540.txt'
+    np='json/bal_08_062507.txt'
+    na='json/bal_08_160126.txt'
     with open(np) as fil:
         dpt = json.load(fil)
-        dpt=dpt['result']
         print ("dp has",len(dpt))
         dp=dict()
         for p in dpt:
@@ -108,27 +108,33 @@ def readBalfiles():
          
     with open(na) as fil:
         dat = json.load(fil)    
-        dat=dat['result']
         print ("da has",len(dat))
         da=dict()
         for a in dat:
             da[a['username']]=a['balance']
 
     dc=dict()
-    n=1500
-    u=0
+    n=2500
+    unc=0
+    chg=0
     for key in dp:
         if (key in da):
             if da[key] != dp[key]:
-                dc[key]=round(1000*(da[key]-dp[key]),3)
-                print(key,"has",dc[key])
+                chg+=1
+                diff=round((da[key]-dp[key]),2)
+                if diff>amnt:
+                    dc[key]=diff
+                    print(key,"has",dc[key])
+                if diff<0:
+                    print(key,"lost",diff)                    
                 n-=1
             else:
-                u+=1
+                unc+=1
         if n<1:
             break
-    print ("unchanged",u)
-    print ("changed",len(dc))
+    print ("unchanged",unc)
+    print ("changed",chg)
+    print ("major",len(dc))
 
 def query():
     print("Using tick",tick,"One Moment...")
@@ -196,7 +202,8 @@ def menu():
                 elif ch=="q":
                     query()
                 elif ch=="r":
-                    readMinfile()
+                    
+                    readBalfiles(inp)
                     print ("read")
                 elif ch=="t":
                     readMinfile()

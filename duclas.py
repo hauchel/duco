@@ -66,7 +66,6 @@ class ccon():
         self.tarBusy=0          #
         self.tarRetry=0         # sum of retries
         self.tarFault=0         # current retries in state W
-        self.conFault=0         # current retries in state V
         self.tarEla=0           # elapsed
         self.tarSum=0
         
@@ -83,7 +82,6 @@ class ccon():
             self.soc.connect((self.pool_address,self.pool_port))  
             print ("Connected") 
             self.sta='V'
-            self.conFault=0
             self.poller.register(self.soc,uselect.POLLIN)
         except Exception as inst:
             print ("Conn Exc",inst)
@@ -228,16 +226,17 @@ class ccon():
         i2.target=self.target
         now=time.ticks_ms()
         t='Y' 
+        
         if self.sta=='V': # waiting for connection
             if  self.poller.poll(0):
                 self.conn2()
                 self.poller.unregister(self.soc)
             else:
-                self.conFault+=1
-                if  self.conFault > 6000:
+                if time.ticks_diff(now,self.start)>15000: # more than 15 secs retry
                       self.poller.unregister(self.soc)
                       self.sta='D'                
             return t
+        
         if self.sta=='R': # waiting for fetch job
             if  not self.poller.poll(0): #have to avoid beeing caught here
                 tim=time.ticks_diff(now,self.jobStartTim)
@@ -323,8 +322,6 @@ class ccon():
                 self.tarEla+=self.ela
                 self.tarSum+=self.result
 
-            else:
-                print ("Ela Zero, why?")
             if self.sta=='D':
                   print (self.target,"SndRes failed")
                   return 'X'

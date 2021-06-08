@@ -13,6 +13,7 @@
 
 uname = "targon"
 tick=10
+minerInfo=False
 
 import time
 import sys
@@ -93,10 +94,12 @@ def query():
             time.sleep(1)
             rest-=1
         time.sleep(tick - time.time() % tick)    # wait exact
+        print("Query",end="\b\b\b\b\b",flush=True)
         thistime=time.time()
         txti=time.strftime("%H:%M:%S", time.localtime())
         # REST api
         bal=float(getBalance())
+        print("Balance",end="\b\b\b\b\b\b\b",flush=True)
         show=2
         if tick != 10:
             if bal==prev:
@@ -104,8 +107,12 @@ def query():
             else:
                 show=1
         if show>0:
-            txmi = "  {:2d}".format(jr.getMiners())    
-            txha = " {:6d}".format(jr.getHashTotal()) 
+            if minerInfo:
+                txmi = "  {:2d}".format(jr.getMiners())    
+                txha = " {:6d}".format(jr.getHashTotal()) 
+            else:
+                txmi = "    "    
+                txha = "       "
             # prepare
             dif10=bal-prev
             tx10="{:10.3f}".format(dif10*1000)  # this 10 secs
@@ -146,7 +153,8 @@ def hilfe():
 a  get AVR Top e.g 20a        \n\
 b  Balance               \n\
 q  Query         \n\
- \n\
+m  toggle minerinfo (if slow)\n\
+    \n\
 o  show Other users     \n\
 u  switchUser, e.g. 3u     \n\
 s  Show topusers     \n\
@@ -161,6 +169,7 @@ x  eXit          \n\
 def menu():   
     global tick
     global connected
+    global minerInfo
     inpAkt=False
     inp=0
     query()
@@ -204,6 +213,10 @@ def menu():
                     query()
                 elif ch=="i":
                     jr.topUsers(inp,'I2C')                     
+                elif ch=="m":
+                    minerInfo = not minerInfo
+                    print ("Minerinfo",minerInfo)
+                    query()   
                 elif ch=="n":
                     tick=10
                     query()                    

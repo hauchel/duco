@@ -4,7 +4,8 @@ esp.osdebug(None)
 import network
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
-wlan.connect('FRITZ!Box 7312','30728671214167815478')
+#wlan.connect('FRITZ!Box 7312','30728671214167815478')
+wlan.connect('NETGEAR','12345678')
 hots =network.WLAN(network.AP_IF)
 hots.active(False)
 
