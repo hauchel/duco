@@ -20,7 +20,7 @@ uname = "targon"
 tick=10
 sortby='software'  # any key to sort by
 sortrev=False      # order
-wide=False        # display of software and rig
+wide=False         # display of software and rig
 
 import time
 import sys
@@ -186,7 +186,7 @@ def menu():
                     if num<10: 
                         print ("assume minimum 10")
                         num=10
-                        jr.topUsers(num,'AVR')  
+                    jr.topUsers(num,'AVR')  
                 elif ch=="A":     #override 10
                     jr.topUsers(inp,'AVR')
                 elif ch=="d":     

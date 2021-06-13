@@ -59,7 +59,7 @@ def overview():
     print("cons",len(myCons))
     now=time.ticks_ms()
     for c in myCons:
-        tim=time.ticks_diff(now,c.jobStart)    
+        tim=time.ticks_diff(now,c.jobStartTim)    
         print (c.target, c.getSlStat(),c.sta,c.reqAnz,'/',c.reqAnzTop,"sin", tim)
 
 def info():
@@ -77,7 +77,7 @@ def loop(top=0):
     ms='?'
     now=time.ticks_ms()
     for c in myCons:   # in case of break 
-        c.jobStart=now
+        c.jobStartTim=now
         if top==0:          #run unlimited
             c.reqAnzTop=0
         else:               #run top jobs (pi)

@@ -56,32 +56,6 @@ def getAllMiners():
     outfile.close()
     return len(miners)
 
-
-def topAVR(min):
-    global miners 
-    global dn # sorted by count
-    print ("Miners has",len(miners))
-    dp=dict()
-    n=8000
-    for p in miners:
-        n-=1
-        if n<0:
-            break
-        if 'AVR' in p['software']:
-            try:
-                dp[p['username']]+=1
-            except:
-                dp[p['username']] =1
-    dn= sorted(dp.items(),key=itemgetter(1),reverse=True)  # list of user,count
-    print ("Count AVR Miners ge",min)
-    str="users=['targon'"
-    for m in dn:    # user,count
-        if m[1]<min:
-            break
-        print(m[0],m[1])
-        str+=",'"+m[0]+"'"
-    str+="]"    
-    print (str)
         
 
 def readMinfile():
@@ -98,7 +72,7 @@ def readBalfiles(amnt):
     global da 
     global dc
     np='json/bal_08_062507.txt'
-    na='json/bal_08_160126.txt'
+    na='json/bal_12_054129.txt'
     with open(np) as fil:
         dpt = json.load(fil)
         print ("dp has",len(dpt))
@@ -195,7 +169,7 @@ def menu():
                     tick=2
                     query()
                 elif ch=="m":
-                    print("Miners",getMiners())
+                    pass
                 elif ch=="n":
                     tick=10
                     query()

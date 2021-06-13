@@ -5,6 +5,7 @@
 import sys
 import select
 import struct
+from time import sleep
 try:
     import usocket as socket
 except ImportError:
@@ -31,6 +32,8 @@ def debugmsg(msg):
     if DEBUG:
         print(msg)
 
+def gotoxy(x, y) :
+    print('\x1b['+str(y)+';'+str(x)+'H', end='')
 
 class websocket:
 
@@ -123,7 +126,7 @@ class clog:
         print ("Init ",host)
         self.host=host
         self.port=port
-        self.slas=slas
+        self.sladi=sladi
         self.verbose=True
         
     def connect(self):  
@@ -139,14 +142,16 @@ class clog:
     
     def close(self):
         print("Closing")
-        self.soc.close()
+        try:
+            self.soc.close()
+        except Exception as inst:
+            print ("Close Exception "+str(inst))
         
     def slect(self):
         readable,writable,exception = select.select([self.soc],[],[],0)
         return len(readable)
         
     def read(self):
-        print("Reading")
         if self.slect()>0:
             b = self.soc.recv(100)
             # scan to remove all control info
@@ -164,11 +169,55 @@ class clog:
             return ba.decode()
         else:
             return ""
+
+    def show(self,str):
+        t=str.split(" ")
+        if len(t[0])==2:
+            y=self.sladi[t[0]]
+            gotoxy(1,y)
+            print(str,"\x1b[K")
+               
+               
+    def interpret(self):
+        self.str=""
+        while True:  
+            if self.slect()>0:
+                self.str+=self.read()
+            else:
+                sleep(0.1)  
+                return
+            t=self.str.split("\n")
+            if len(t)>0:
+                if len(t[0])>0:
+                    self.str=self.str[len(t[0])+1:]
+                    self.show(t[0])
+                else:
+                    return
+            else:
+                sleep(0.1)
+                return
+            if kb.kbhit():
+                return
+            
+                 
         
 mycons=[]
 
+rr=""
+
+def loop():
+    while True:
+        for cl in mycons:
+            cl.interpret()
+        if kb.kbhit():
+            gotoxy(1,20)
+            return
+        
+    
+
 def get_config():
     global mycons
+    global slali
     conf=open("conflog.txt",'r')
     lin=1
     prev=0;
@@ -192,13 +241,9 @@ def get_config():
     con=clog('192.168.178.'+str(prev),8266,slali)
     mycons.append(con)
         
-		
-def interpret():
-	pass
-    
-         
      
 def menu():   
+    global rr
     inpAkt=False
     inp=0
     myc=0
@@ -220,15 +265,21 @@ def menu():
             inpAkt=False
             try:
                 if ch=="c":
-                    mycons[myc].connect()
+                    for cl in mycons:
+                        cl.connect()
                 elif ch=="d":
                      mycons[myc].close()
                 elif ch=="g":
-                    get_config()					
+                    get_config()
+                elif ch=="i":
+                    mycons[myc].interpret()
+                elif ch=="l":
+                    loop()                    
                 elif ch=="r":
-                     mycons[myc].read()
+                     rr=mycons[myc].read()
+                     print(rr)
                 elif ch=="s":
-                     mycons[myc].slect()
+                     print("Slect:",mycons[myc].slect())
                 elif ch=="t":
                      myc=inp                   
                 elif ch=="u":
@@ -243,5 +294,5 @@ def menu():
                 print ("menu Exception "+str(inst))
                 raise  #to ease fix
                 
-
+get_config()
 menu()

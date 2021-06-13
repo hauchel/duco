@@ -14,6 +14,7 @@
 uname = "targon"
 tick=10
 minerInfo=False
+alpha=0.5       #for exp. smoothing
 
 import time
 import sys
@@ -69,6 +70,8 @@ def query():
     ar=[0,0,0,0,0,0]
     su=0
     arP=0
+    cnt=0
+    ytm1=0
     logN=time.strftime("_%d_%H.txt", time.localtime())
     if tick==10:  #just in case 2 sessions inquire same user
         logN='logs/perf_'+jr.username+logN
@@ -100,6 +103,7 @@ def query():
         # REST api
         bal=float(getBalance())
         print("Balance",end="\b\b\b\b\b\b\b",flush=True)
+        cnt+=1
         show=2
         if tick != 10:
             if bal==prev:
@@ -126,6 +130,12 @@ def query():
             txsu="{:10.3f}".format(su*1000)     # per minute   
             txpd="{:10.2f}".format(su*1440)     # per day
             txab="{:15.6f}".format(bal)         # abs for logf
+            if cnt>6 :      #exp. smoothing
+                ytm1=alpha*(su*1440-ytm1)+ytm1
+                txex="{:10.2f}".format(ytm1)
+            else:
+                ytm1=su*1440
+                txex="      "
             # write
             if show==1:   #fast
                 txtd="  ({:6.3f})".format(thistime-lasttime)
@@ -133,7 +143,7 @@ def query():
                 txl=txti+" "+txab+txha+txmi+txtd+tx10
                 lasttime=thistime
             else:
-                txs=txti+" "+tx99+txha+txmi+tx10+txsu+txpd
+                txs=txti+" "+tx99+txha+txmi+tx10+txsu+txpd+txex
                 txl=txti+" "+txab+txha+txmi+tx10+txsu+txpd
             print (txs)
             logf.write(txl+"\n")
@@ -150,8 +160,9 @@ def query():
 
 def hilfe():
     print("              \n\
-a  get AVR Top e.g 20a        \n\
+a  get AVR Top e.g 20a   \n\
 b  Balance               \n\
+i  get I2c Top e.g. 1i    \n\
 q  Query         \n\
 m  toggle minerinfo (if slow)\n\
     \n\
@@ -170,6 +181,7 @@ def menu():
     global tick
     global connected
     global minerInfo
+    global alpha
     inpAkt=False
     inp=0
     query()
@@ -211,6 +223,9 @@ def menu():
                 elif ch=="f":
                     tick=1
                     query()
+                elif ch=="g":
+                    alpha=inp/1000
+                    print("Alpha ",alpha)
                 elif ch=="i":
                     jr.topUsers(inp,'I2C')                     
                 elif ch=="m":

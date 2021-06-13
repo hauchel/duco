@@ -143,10 +143,10 @@ class ccon():
             tx=tx+ str(rat)  
         tx=  tx+ ","+self.tarnam+"," + self.rignam
         tx=  tx+ "," + self.ducoId
-        if self.result==0:
-            print(self.target,tx)
-            self.sta='C'                
-            return
+        #if self.result==0:
+        #    print(self.target,tx)
+        #    self.sta='C'                
+        #    return
         if self.verbose: 
             print ("SndRes",self.sta,tx)
         try:
@@ -254,25 +254,25 @@ class ccon():
             return t
         
         if self.sta=='W':   # speed limiter
-            if self.result==0:
-                print (self.target, "Retry",self.tarFault)
-                self.tarRetry+=1
-                self.tarFault+=1
-                if self.tarFault<3:
-                    self.transfer()  # changes state to 'K'
-                else:
-                    self.sta='C'     # give up
-                return t
-            self.tarFault=0   
+            #if self.result==0:
+            #    print (self.target, "Retry",self.tarFault)
+            #    self.tarRetry+=1
+            #    self.tarFault+=1
+            #    if self.tarFault<3:
+            #        self.transfer()  # changes state to 'K'
+            #    else:
+            #        self.sta='C'     # give up
+            #    return t
+            #self.tarFault=0   
                 
             self.sndRes()   # changes state to 'E'
             return t        # not needed
-            if self.jobContTime==0: #TODO
-                self.jobContTime=now+2000
-            else:
-                if now>self.jobContTime: 
-                    self.sndRes()  # changes state to 'E'
-            return t
+            #if self.jobContTime==0: #TODO
+            #    self.jobContTime=now+2000
+            #else:
+            #    if now>self.jobContTime: 
+            #        self.sndRes()  # changes state to 'E'
+            #return t
         
         if self.sta=='E':  # fetch response
             if  not self.poller.poll(0):
