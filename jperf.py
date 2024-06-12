@@ -40,7 +40,7 @@ def getBalance():
     global connected  
     connected=False
     try:
-        r=requests.get('https://server.duinocoin.com:5000/balances/'+jr.username)
+        r=requests.get('https://server.duinocoin.com/balances/'+jr.username)
     except Exception as inst:
         print ("***getBalance Exception "+str(inst))
         return 0

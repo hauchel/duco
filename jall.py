@@ -11,7 +11,8 @@ import json
 import requests
 from operator import itemgetter
 miners={}   #global, set by getMineers
-
+na='json/bal_03_121745.txt'
+np='json/bal_03_114122.txt'
 
 from kbhit import KBHit
 kb = KBHit()
@@ -20,8 +21,28 @@ tick=10
 
 def getBalances():    
     global connected  #TODO error checking
+    global na
     try:
-        r=requests.get('https://server.duinocoin.com:5000/balances')
+        r=requests.get('https://server.duinocoin.com/balances.json')
+    except Exception as inst:
+        print ("get_balances Exception "+str(inst))
+        connected=False
+        return 0
+    connected=True
+    jdic=json.loads(r.text)
+    jsoN=time.strftime("json/bal_%d_%H%M%S.txt", time.localtime())
+    print("to file",jsoN)
+    na=jsoN
+    with open(jsoN, 'w') as outfile:
+        json.dump(jdic, outfile)
+    outfile.close()  # required?
+    return len(jdic)
+
+def getBalancesold():    
+    global connected  #TODO error checking
+    global na
+    try:
+        r=requests.get('https://server.duinocoin.com/balances.json')
     except Exception as inst:
         print ("get_balances Exception "+str(inst))
         connected=False
@@ -31,17 +52,17 @@ def getBalances():
     jdic=jdic['result']
     jsoN=time.strftime("json/bal_%d_%H%M%S.txt", time.localtime())
     print("to file",jsoN)
+    na=jsoN
     with open(jsoN, 'w') as outfile:
         json.dump(jdic, outfile)
     outfile.close()  # required?
     return len(jdic)
-
 def getAllMiners():    
     global connected  #TODO error checking
     global miners
     print('Please Wait...')
     try:
-        r=requests.get('https://server.duinocoin.com:5000/miners')
+        r=requests.get('https://server.duinocoin.com/miners')
     except Exception as inst:
         print ("getMiners Exception "+str(inst))
         connected=False
@@ -56,23 +77,14 @@ def getAllMiners():
     outfile.close()
     return len(miners)
 
-        
-
-def readMinfile():
-    global miners
-    np='json/min_30_073631.txt'
-    with open(np) as fil:
-        miners = json.load(fil)
-        print ("miners has",len(miners))
- 
 
 def readBalfiles(amnt):
     # compares two balfiles and shows chng > amnt
     global dp # dict with balance[user]
     global da 
     global dc
-    np='json/bal_08_062507.txt'
-    na='json/bal_12_054129.txt'
+    print (np)
+    print (na)
     with open(np) as fil:
         dpt = json.load(fil)
         print ("dp has",len(dpt))
@@ -88,7 +100,6 @@ def readBalfiles(amnt):
             da[a['username']]=a['balance']
 
     dc=dict()
-    n=2500
     unc=0
     chg=0
     for key in dp:
@@ -96,19 +107,21 @@ def readBalfiles(amnt):
             if da[key] != dp[key]:
                 chg+=1
                 diff=round((da[key]-dp[key]),2)
+                if key=="targon":
+                    print ("********************************",diff)
                 if diff>amnt:
                     dc[key]=diff
-                    print(key,"has",dc[key])
+#                    print(key,"won",dc[key])
                 if diff<0:
                     print(key,"lost",diff)                    
-                n-=1
             else:
                 unc+=1
-        if n<1:
-            break
     print ("unchanged",unc)
     print ("changed",chg)
     print ("major",len(dc))
+    for (key, value) in sorted(dc.items(),key=itemgetter(1), reverse=True):
+         print(key,"won",dc[key])
+    
 
 def query():
     print("Using tick",tick,"One Moment...")
@@ -162,14 +175,14 @@ def menu():
             inpAkt=False
             try:
                 if ch=="a":
-                    topAVR(inp)
+                    pass
                 elif ch=="b":
                     print("Balances",getBalances())
                 elif ch=="f":
                     tick=2
                     query()
                 elif ch=="m":
-                    pass
+                    getAllMiners()
                 elif ch=="n":
                     tick=10
                     query()
@@ -180,8 +193,7 @@ def menu():
                     readBalfiles(inp)
                     print ("read")
                 elif ch=="t":
-                    readMinfile()
-                    print ("read")                    
+                    pass                  
                 elif ch=="u":
                     pass
                     query()              

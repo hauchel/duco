@@ -18,7 +18,7 @@ class cserv():
     def __init__(self):    
         print ("Finding Server...")
         self.pool_address="51.15.127.80"
-        self.pool_port =2811
+        self.pool_port =2814
         return
 #        soc = socket.socket()
 #        soc.settimeout(10)
@@ -34,13 +34,14 @@ class cserv():
 
 class ccon():
 
-    def __init__(self,targ,tarnam,pool_address,pool_port,rignam):    
+    def __init__(self,targ,tarnam,pool_address,pool_port,rignam,username):    
         print ("Init ",targ)
         self.target=targ
         self.tarnam=tarnam
         self.rignam=rignam
         self.pool_address=pool_address
         self.pool_port=pool_port
+        self.username=username
         self.lasthash=""
         self.newhash=""
         self.result=0
@@ -63,11 +64,11 @@ class ccon():
         self.jobStartTim=0      # time of job Start
         self.jobRecvTim=0       # time of receiving job
         self.jobContTim=0       # time to continue job in state W
-        self.tarBusy=0          #
+        self.tarBusy=0          # sum of busies
         self.tarRetry=0         # sum of retries
         self.tarFault=0         # current retries in state W
         self.tarEla=0           # elapsed
-        self.tarSum=0
+        self.tarSum=0           #
         
     def conn(self):    
         i2.target=self.target
@@ -76,11 +77,11 @@ class ccon():
         self.ducoId=self.getDucoId()
         print (self.target,"Connecting...")
         self.soc = socket.socket()
-        self.soc.settimeout(10) # low timeout as this blocks, will try again next loop
+        self.soc.settimeout(40) # low timeout as this blocks, will try again next loop
         self.start=time.ticks_ms()
         try:
             self.soc.connect((self.pool_address,self.pool_port))  
-            print ("Connected") 
+            print (self.target,"Connected") 
             self.sta='V'
             self.poller.register(self.soc,uselect.POLLIN)
         except Exception as inst:
@@ -91,14 +92,13 @@ class ccon():
         try:              
             self.soc.recv(3) #skip version
             self.sta='C'
-            print ("Connect took ",time.ticks_diff(time.ticks_ms(),self.start))
+            print (self.target,"Connect took ",time.ticks_diff(time.ticks_ms(),self.start))
         except Exception as inst:
             print ("Conn2 Exc",inst)
             self.sta='D'
         
-    def reqJob(self,username = "targon"):
-        tx="JOB," + username + ",AVR"
-        if self.verbose: print(self.target,"ReqJob",tx)
+    def reqJob(self):
+        tx="JOB," + self.username + ",AVR"
         try:
             self.soc.send(bytes(tx, "utf8"))  # Send job request
             self.sta='R'
@@ -110,7 +110,6 @@ class ccon():
             self.sta='D'
             
     def getJob(self):
-        if self.verbose: print("GetJob",self.sta)
         try:
             job = self.soc.recv(1024).decode()  # Get work from pool
             self.sta='J'
@@ -121,7 +120,7 @@ class ccon():
         self.jobRecvTim=time.ticks_ms()
         self.jobContTim=0
         tim=time.ticks_diff(self.jobRecvTim,self.start)
-        print (self.target,"PER getJob took",tim)
+        #print (self.target,"PER getJob took",tim)
         self.getJobWait+=tim
         job = job.split(",")  
         if len(job)>2:
@@ -131,9 +130,9 @@ class ccon():
             self.newhash=job[1]
             #print (job[2])
             self.difficulty=int(job[2])
-            if self.verbose: print(self.target,job[0],job[1],job[2])
+            #if self.verbose: print(self.target,job[0],job[1],job[2])
         else:
-            print (self.target,"Joblen?",len(job)," ",str(job),"<")
+            print (self.target,"Joblen?",len(job),str(job))
             self.sta='D'    
             
     def sndRes(self):
@@ -147,8 +146,7 @@ class ccon():
         #    print(self.target,tx)
         #    self.sta='C'                
         #    return
-        if self.verbose: 
-            print ("SndRes",self.sta,tx)
+        #if self.verbose:  print ("SndRes",self.sta,tx)
         try:
             self.soc.sendall(bytes(tx,'utf8'))
             self.sta='E'
@@ -160,7 +158,6 @@ class ccon():
             return
     
     def getRes(self):
-        if self.verbose: print("GetRes",self.sta)
         try:
             feedback = self.soc.recv(100).decode() 
             self.sta='C'
@@ -173,8 +170,8 @@ class ccon():
         timtot=time.ticks_diff(now,self.jobStartTim)
         self.reqAnz+=1
         self.getResWait+=tim
-        print (self.target,"PER getRes took",tim)
-        print (self.target,feedback.rstrip(),"took",timtot) 
+        #print (self.target,"PER getRes took",tim)
+        print (self.target,feedback.rstrip(),timtot) 
               
     def close(self):
         self.sta='D'
@@ -232,7 +229,7 @@ class ccon():
                 self.conn2()
                 self.poller.unregister(self.soc)
             else:
-                if time.ticks_diff(now,self.start)>15000: # more than 15 secs retry
+                if time.ticks_diff(now,self.start)>40000: # more than 15 secs retry
                       self.poller.unregister(self.soc)
                       self.sta='D'                
             return t
@@ -240,7 +237,7 @@ class ccon():
         if self.sta=='R': # waiting for fetch job
             if  not self.poller.poll(0): #have to avoid beeing caught here
                 tim=time.ticks_diff(now,self.jobStartTim)
-                if tim>20000:
+                if tim>40000:
                     print (self.target,"R Time? ",tim)
                     self.poller.unregister(self.soc)
                     self.sta='D'
@@ -277,7 +274,7 @@ class ccon():
         if self.sta=='E':  # fetch response
             if  not self.poller.poll(0):
                 tim=time.ticks_diff(now,self.jobStartTim)
-                if tim>30000:   # if job took so long, something is kaputt
+                if tim>40000:   # if job took so long, something is kaputt
                     print (self.target,"E Time? ",tim)
                     self.poller.unregister(self.soc)
                     self.sta='D'
@@ -317,8 +314,8 @@ class ccon():
             i2.send("A")  # reset slave 
             self.sta='W'
             if self.ela!=0:
-                rat=round(1000*self.result/self.ela)
-                print(self.target,"ela:",self.ela,"res:",self.result,"rat:",rat)
+                #rat=round(1000*self.result/self.ela)
+                #print(self.target,"ela:",self.ela,"res:",self.result,"rat:",rat)
                 self.tarEla+=self.ela
                 self.tarSum+=self.result
 
@@ -332,10 +329,6 @@ class ccon():
         self.tarRetry+=1
         return 'X'
     
-    def setVerbose(self,x):
-        self.verbose=x
-        print (self.tarnam," verbose ",str(self.verbose))
-        
     def coninfo(self):
         print()
         print ("Target",self.target," sta",self.sta,"retry",self.tarRetry)
@@ -348,7 +341,8 @@ class ccon():
             print ("SndWait ",self.getResWait, " per ",tt)
             if self.tarEla >0:
                  tt=round(1000*self.tarSum/self.tarEla)
-                 print ("Ela ", self.tarEla, "Res",self.tarSum, "Avg ",tt)
+                 ta=round(self.tarSum/self.reqAnz)
+                 print ("Ela", self.tarEla, "Res",self.tarSum, "Hsh",tt,"Avg",ta)
             tt=round(self.tarBusy/self.reqAnz)
             print ("Targ Busy ",self.tarBusy," per ",tt)         
 #        print ("Last",self.lasthash)

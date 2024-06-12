@@ -43,7 +43,7 @@ myCons=[]
 serv=cserv()
 
 def newCon(targ,tarnam):
-     myCons.append(ccon(targ,tarnam,serv.pool_address, serv.pool_port,rigname))
+     myCons.append(ccon(targ,tarnam,serv.pool_address, serv.pool_port,rigname,username))
     
 def get_config():
     global rigname
@@ -92,13 +92,14 @@ def loop(top=0):
                 allbusy=0
             if ms != 'Z':
                 zings=0
+        time.sleep(0.05)  #let other tasks run                
         if zings>0:
             print("Zinged")
             break
         if kbhit() is not None:
             break
         if allbusy>0:
-            print("All Bus ",allbusy)
+            #print("All Bus ",allbusy)
             gc.collect()    # something useful
             time.sleep(0.1)
     print("Loop Done")
@@ -109,9 +110,7 @@ def menu():
     inpAkt=False
     inp=0
     myc=0
-    verbose = True
-    print (username+", welcome to mydu. Use s to start:") 
-    print ("... then l to loop:")
+    print (username+", welcome to mydu.") 
     if  len(myCons)==0:  #re-running config would duplicate cons
         get_config()
         loop()
@@ -160,10 +159,6 @@ def menu():
                 elif ch=="u":
                     myCons[inp].statReset() 
                     print ("stats reset for",inp)
-                elif ch=="v":
-                    verbose = not verbose
-                    for c in myCons:
-                         c.setVerbose(verbose)
                 elif ch=="w":
                     inp=myCons[myc].getResult()
                     print ("inp",inp)
